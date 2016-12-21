@@ -1,0 +1,5 @@
+- create basic mem and cpu structs
+- create a text rendering
+- create an opcode entering interface
+- implement cpu opcodes
+- tbc
