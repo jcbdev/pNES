@@ -96,7 +96,111 @@ TEST_F(CpuTest, AndAllAddressingModes) {
 }
 
 TEST_F(CpuTest, AslAccumlator) {
-    
+    ExecuteAccumulator(cpu, mem, 0x0A, nullptr, 0x01);
+    EXPECT_EQ(cpu->a, 0x02);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, AslNegative) {
+    ExecuteAccumulator(cpu, mem, 0x0A, nullptr, 0x41);
+    EXPECT_EQ(cpu->a, 0x82);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, AslOverflow) {
+    ExecuteAccumulator(cpu, mem, 0x0A, nullptr, 0x81);
+    EXPECT_EQ(cpu->a, 0x02);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, true);
+}
+
+TEST_F(CpuTest, AslZero) {
+    ExecuteAccumulator(cpu, mem, 0x0A, nullptr, 0x80);
+    EXPECT_EQ(cpu->a, 0x0);
+    EXPECT_nvidzc(cpu, false, false, false, true, true, true);
+}
+
+TEST_F(CpuTest, AslAllAddressingModes) {
+    ExecuteAccumulator(cpu, mem, 0x0A, nullptr, 0x01);
+    EXPECT_EQ(cpu->a, 0x02);
+    ExecuteZeroPage(cpu, mem, 0x06, 0x01, nullptr);
+    EXPECT_ZeroPage(mem, 0x02);
+    ExecuteZeroPageX(cpu, mem, 0x16, 0x01, nullptr);
+    EXPECT_ZeroPageX(mem, 0x02);
+    ExecuteAbsolute(cpu, mem, 0x0E, 0x01, nullptr);
+    EXPECT_Absolute(mem, 0x02);
+    ExecuteAbsoluteX(cpu, mem, 0x1E, 0x01, nullptr);
+    EXPECT_AbsoluteX(mem, 0x02);
+}
+
+TEST_F(CpuTest, BitAll) {
+    ExecuteZeroPage(cpu, mem, 0x24, 0xFF, nullptr, 0x1F);
+    EXPECT_nvidzc(cpu, true, true, false, true, false, false);
+    ExecuteZeroPage(cpu, mem, 0x24, 0xFF, nullptr, 0x00);
+    EXPECT_nvidzc(cpu, true, true, false, true, true, false);
+    ExecuteZeroPage(cpu, mem, 0x24, 0x00, nullptr, 0x00);
+    EXPECT_nvidzc(cpu, false, false, false, true, true, false);
+    ExecuteAbsolute(cpu, mem, 0x2C, 0xFF, nullptr, 0x1F);
+    EXPECT_nvidzc(cpu, true, true, false, true, false, false);
+}
+
+TEST_F(CpuTest, Bpl) {
+    CpuFlags p = nvdizc(false, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x10, 0x40, &p, true);
+    p = nvdizc(true, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x10, 0x40, &p, false);
+}
+
+TEST_F(CpuTest, Bmi) {
+    CpuFlags p = nvdizc(true, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x30, 0x40, &p, true);
+    p = nvdizc(false, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x30, 0x40, &p, false);
+}
+
+TEST_F(CpuTest, Bvc) {
+    CpuFlags p = nvdizc(false, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x50, 0x40, &p, true);
+    p = nvdizc(false, true, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x50, 0x40, &p, false);
+}
+
+TEST_F(CpuTest, Bvs) {
+    CpuFlags p = nvdizc(false, true, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x70, 0x40, &p, true);
+    p = nvdizc(false, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x70, 0x40, &p, false);
+}
+
+TEST_F(CpuTest, Bcc) {
+    CpuFlags p = nvdizc(false, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0x90, 0x40, &p, true);
+    p = nvdizc(false, false, false, true, false, true);
+    ExecuteBranch(cpu, mem, 0x90, 0x40, &p, false);
+}
+
+TEST_F(CpuTest, Bcs) {
+    CpuFlags p = nvdizc(false, false, false, true, false, true);
+    ExecuteBranch(cpu, mem, 0xB0, 0x40, &p, true);
+    p = nvdizc(false, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0xB0, 0x40, &p, false);
+}
+
+TEST_F(CpuTest, Bne) {
+    CpuFlags p = nvdizc(false, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0xD0, 0x40, &p, true);
+    p = nvdizc(false, false, false, true, true, false);
+    ExecuteBranch(cpu, mem, 0xD0, 0x40, &p, false);
+}
+
+TEST_F(CpuTest, Beq) {
+    CpuFlags p = nvdizc(false, false, false, true, true, false);
+    ExecuteBranch(cpu, mem, 0xF0, 0x40, &p, true);
+    p = nvdizc(false, false, false, true, false, false);
+    ExecuteBranch(cpu, mem, 0xF0, 0x40, &p, false);
+}
+
+TEST_F(CpuTest, Brk) {
+    ExecuteBrk
 }
 
 TEST_F(CpuTest, LdxZeroPageYAddressing) {

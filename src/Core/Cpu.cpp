@@ -43,6 +43,7 @@ void Cpu::Reset() {
 void Cpu::Cycle() {
 
     switch(_readPcAndInc()){
+        //ADC
         case 0x69: Read(&Cpu::Immediate, &Cpu::Adc); break;
         case 0x65: Read(&Cpu::Zeropage, &Cpu::Adc); break;
         case 0x75: Read(&Cpu::ZeropageX, &Cpu::Adc); break;
@@ -52,6 +53,7 @@ void Cpu::Cycle() {
         case 0x61: Read(&Cpu::IndirectX, &Cpu::Adc); break;
         case 0x71: Read(&Cpu::IndirectY, &Cpu::Adc); break;
 
+        //And
         case 0x29: Read(&Cpu::Immediate, &Cpu::And); break;
         case 0x25: Read(&Cpu::Zeropage, &Cpu::And); break;
         case 0x35: Read(&Cpu::ZeropageX, &Cpu::And); break;
@@ -61,8 +63,31 @@ void Cpu::Cycle() {
         case 0x21: Read(&Cpu::IndirectX, &Cpu::And); break;
         case 0x31: Read(&Cpu::IndirectY, &Cpu::And); break;
 
+        //Asl
         case 0x0A: AslAccumulator(); break;
+        case 0x06: Rmw(&Cpu::Zeropage, &Cpu::Asl); break;
+        case 0x16: Rmw(&Cpu::ZeropageX, &Cpu::Asl); break;
+        case 0x0E: Rmw(&Cpu::Absolute, &Cpu::Asl); break;
+        case 0x1E: Rmw(&Cpu::AbsoluteX, &Cpu::Asl); break;
 
+        //Bit
+        case 0x24: Read(&Cpu::Zeropage, &Cpu::Bit); break;
+        case 0x2C: Read(&Cpu::Absolute, &Cpu::Bit); break;
+
+        //Branch
+        case 0x10: Branch(!p.n); break;
+        case 0x30: Branch(p.n); break;
+        case 0x50: Branch(!p.v); break;
+        case 0x70: Branch(p.v); break;
+        case 0x90: Branch(!p.c); break;
+        case 0xB0: Branch(p.c); break;
+        case 0xD0: Branch(!p.z); break;
+        case 0xF0: Branch(p.z); break;
+
+        //Brk
+        case 0x00: Brk(); break;
+
+        //Ldx
         case 0xB6: Read(&Cpu::ZeropageY, &Cpu::Ldx); break;
 
         default: error = true; break;
@@ -97,6 +122,34 @@ void Cpu::AslAccumulator(){
     a <<= 1;
     p.n = (a & 0x80);
     p.z = (a == 0);
+}
+
+void Cpu::Bit(){
+    p.z = ((_val & a) == 0);
+    p.n = (_val & 0x80);
+    p.v = (_val & 0x40);
+}
+
+void Cpu::Branch(bool condition){
+    _val = _readPcAndInc();
+    if (condition) {
+        uint16_t val16 = pc + (uint8_t)_val;
+        _mem->PageIfRequired(pc, val16);
+        _readPc();
+        pc = val16;
+    }
+}
+
+void Cpu::Brk(){
+    _readPcAndInc();
+    _mem->(pc >> 8);
+    _writeSp(pc >> 0);
+    _writeSp(p | 0x30);
+    _addr16.l = _mem->Read(0xfffe);
+    p.i = 1;
+    p.d = 0;
+    _addr16.h = _mem->Read(0xffff);
+    pc = _addr16.w;
 }
 
 void Cpu::Ldx() {
@@ -193,4 +246,8 @@ void Cpu::Store(void (Cpu::*operation)(void (Cpu::*)(), bool, bool), void (Cpu::
 
 void Cpu::Rmw(void (Cpu::*operation)(void (Cpu::*)(), bool, bool), void (Cpu::*opcode)()) {
     (this->*operation)(opcode, true, true);
+}
+
+void Cpu::_writeSp(uint8_t data){
+    _mem->Write(0x0100 | s--, data);
 }

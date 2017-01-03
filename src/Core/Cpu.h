@@ -45,6 +45,9 @@ public:
     void And();
     void Asl();
     void AslAccumulator();
+    void Bit();
+    void Branch(bool condition);
+    void Brk();
     void Ldx();
 
     void Immediate(void (Cpu::*opcode)(), bool rmw, bool write);
@@ -57,11 +60,14 @@ public:
     void IndirectX(void (Cpu::*opcode)(), bool rmw, bool write);
     void IndirectY(void (Cpu::*opcode)(), bool rmw, bool write);
 
+
+
 private:
     uint8_t _val;
     Address16 _addr16;
     uint8_t _readPcAndInc();
     uint8_t _readPc();
+    void _writeSp(uint8_t data);
 };
 
 
