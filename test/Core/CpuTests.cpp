@@ -200,7 +200,89 @@ TEST_F(CpuTest, Beq) {
 }
 
 TEST_F(CpuTest, Brk) {
-    ExecuteBrk
+    ExecuteBrk(cpu, mem, 0x00, 0x81, 0x82, nullptr);
+}
+
+TEST_F(CpuTest, CmpNegative){
+    ExecuteImmediate(cpu, mem, 0xC9, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, CmpZero){
+    ExecuteImmediate(cpu, mem, 0xC9, 0x10, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, false, false, false, true, true, true);
+}
+
+TEST_F(CpuTest, CmpCarry){
+    ExecuteImmediate(cpu, mem, 0xC9, 0x10, nullptr, 0x11);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, true);
+}
+
+TEST_F(CpuTest, CmpAllAddressingModes){
+    ExecuteImmediate(cpu, mem, 0xC9, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteZeroPage(cpu, mem, 0xC5, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteZeroPageX(cpu, mem, 0xD5, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteAbsolute(cpu, mem, 0xCD, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteAbsoluteX(cpu, mem, 0xDD, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteAbsoluteY(cpu, mem, 0xD9, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteIndirectX(cpu, mem, 0xC1, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteIndirectY(cpu, mem, 0xD1, 0x12, nullptr, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, CpxNegative){
+    ExecuteImmediate(cpu, mem, 0xE0, 0x12, nullptr, 0x00, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, CpxZero){
+    ExecuteImmediate(cpu, mem, 0xE0, 0x10, nullptr, 0x00, 0x10);
+    EXPECT_nvidzc(cpu, false, false, false, true, true, true);
+}
+
+TEST_F(CpuTest, CpxCarry){
+    ExecuteImmediate(cpu, mem, 0xE0, 0x10, nullptr, 0x00, 0x11);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, true);
+}
+
+TEST_F(CpuTest, CpxAllAddressingModes){
+    ExecuteImmediate(cpu, mem, 0xE0, 0x12, nullptr, 0x10, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteZeroPage(cpu, mem, 0xE4, 0x12, nullptr, 0x10, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteAbsolute(cpu, mem, 0xEC, 0x12, nullptr, 0x10, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, CpyNegative){
+    ExecuteImmediate(cpu, mem, 0xC0, 0x12, nullptr, 0x00, 0x00, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, CpyZero){
+    ExecuteImmediate(cpu, mem, 0xC0, 0x10, nullptr, 0x00, 0x00, 0x10);
+    EXPECT_nvidzc(cpu, false, false, false, true, true, true);
+}
+
+TEST_F(CpuTest, CpyCarry){
+    ExecuteImmediate(cpu, mem, 0xC0, 0x10, nullptr, 0x00, 0x00, 0x11);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, true);
+}
+
+TEST_F(CpuTest, CpyAllAddressingModes){
+    ExecuteImmediate(cpu, mem, 0xC0, 0x12, nullptr, 0x00, 0x00, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteZeroPage(cpu, mem, 0xC4, 0x12, nullptr, 0x00, 0x00, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+    ExecuteAbsolute(cpu, mem, 0xCC, 0x12, nullptr, 0x00, 0x00, 0x10);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
 }
 
 TEST_F(CpuTest, LdxZeroPageYAddressing) {

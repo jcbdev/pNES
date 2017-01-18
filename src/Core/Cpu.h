@@ -48,6 +48,10 @@ public:
     void Bit();
     void Branch(bool condition);
     void Brk();
+    void Cmp();
+    void Cpx();
+    void Cpy();
+    void Dec();
     void Ldx();
 
     void Immediate(void (Cpu::*opcode)(), bool rmw, bool write);
@@ -68,6 +72,7 @@ private:
     uint8_t _readPcAndInc();
     uint8_t _readPc();
     void _writeSp(uint8_t data);
+    uint8_t _readSp();
 };
 
 

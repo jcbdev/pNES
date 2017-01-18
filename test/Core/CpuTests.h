@@ -44,6 +44,25 @@ void ExecuteAccumulator(ICpu *cpu, std::shared_ptr<Memory> mem, uint8_t opcode, 
     EXPECT_FALSE(cpu->error);
 }
 
+void ExecuteBrk(ICpu *cpu, std::shared_ptr<Memory> mem, uint8_t opcode, uint8_t l, uint8_t h, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+    cpu->Reset();
+    cpu->a = a;
+    cpu->x = x;
+    cpu->y = y;
+    cpu->s = s;
+    mem->Write(0x8000, opcode);
+    mem->Write(0xFFFE, l);
+    mem->Write(0xFFFF, h);
+    if (flags!= nullptr) cpu->p = *flags;
+    auto expectedP = cpu->p | 0x30;
+    cpu->Cycle();
+    EXPECT_EQ(mem->Read(0x100 | ++cpu->s), expectedP);
+    EXPECT_EQ(mem->Read(0x100 | ++cpu->s), 0x02);
+    EXPECT_EQ(mem->Read(0x100 | ++cpu->s), 0x80);
+    EXPECT_EQ(cpu->pc, l | (h<<8));
+    EXPECT_FALSE(cpu->error);
+}
+
 void ExecuteBranch(ICpu *cpu, std::shared_ptr<Memory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, bool branches, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;

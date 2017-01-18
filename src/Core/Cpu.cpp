@@ -87,6 +87,26 @@ void Cpu::Cycle() {
         //Brk
         case 0x00: Brk(); break;
 
+        //Cmp
+        case 0xC9: Read(&Cpu::Immediate, &Cpu::Cmp); break;
+        case 0xC5: Read(&Cpu::Zeropage, &Cpu::Cmp); break;
+        case 0xD5: Read(&Cpu::ZeropageX, &Cpu::Cmp); break;
+        case 0xCD: Read(&Cpu::Absolute, &Cpu::Cmp); break;
+        case 0xDD: Read(&Cpu::AbsoluteX, &Cpu::Cmp); break;
+        case 0xD9: Read(&Cpu::AbsoluteY, &Cpu::Cmp); break;
+        case 0xC1: Read(&Cpu::IndirectX, &Cpu::Cmp); break;
+        case 0xD1: Read(&Cpu::IndirectY, &Cpu::Cmp); break;
+
+        //Cpx
+        case 0xE0: Read(&Cpu::Immediate, &Cpu::Cpx); break;
+        case 0xE4: Read(&Cpu::Zeropage, &Cpu::Cpx); break;
+        case 0xEC: Read(&Cpu::Absolute, &Cpu::Cpx); break;
+
+        //Cpy
+        case 0xC0: Read(&Cpu::Immediate, &Cpu::Cpy); break;
+        case 0xC4: Read(&Cpu::Zeropage, &Cpu::Cpy); break;
+        case 0xCC: Read(&Cpu::Absolute, &Cpu::Cpy); break;
+
         //Ldx
         case 0xB6: Read(&Cpu::ZeropageY, &Cpu::Ldx); break;
 
@@ -142,7 +162,7 @@ void Cpu::Branch(bool condition){
 
 void Cpu::Brk(){
     _readPcAndInc();
-    _mem->(pc >> 8);
+    _writeSp(pc >> 8);
     _writeSp(pc >> 0);
     _writeSp(p | 0x30);
     _addr16.l = _mem->Read(0xfffe);
@@ -150,6 +170,31 @@ void Cpu::Brk(){
     p.d = 0;
     _addr16.h = _mem->Read(0xffff);
     pc = _addr16.w;
+}
+
+void Cpu::Cmp(){
+    signed r = a - _val;
+    p.n = (r & 0x80);
+    p.z = (uint8_t)(r == 0);
+    p.c = (r >= 0);
+}
+
+void Cpu::Cpx(){
+    signed r = x - _val;
+    p.n = (r & 0x80);
+    p.z = (uint8_t)(r == 0);
+    p.c = (r >= 0);
+}
+
+void Cpu::Cpy(){
+    signed r = y - _val;
+    p.n = (r & 0x80);
+    p.z = (uint8_t)(r == 0);
+    p.c = (r >= 0);
+}
+
+void Cpu::Dec(){
+    
 }
 
 void Cpu::Ldx() {
@@ -250,4 +295,8 @@ void Cpu::Rmw(void (Cpu::*operation)(void (Cpu::*)(), bool, bool), void (Cpu::*o
 
 void Cpu::_writeSp(uint8_t data){
     _mem->Write(0x0100 | s--, data);
+}
+
+uint8_t Cpu::_readSp(){
+    return _mem->Read(0x0100 | ++s);
 }
