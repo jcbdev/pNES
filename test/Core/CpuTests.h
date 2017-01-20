@@ -78,6 +78,19 @@ void ExecuteBranch(ICpu *cpu, std::shared_ptr<Memory> mem, uint8_t opcode, uint8
     EXPECT_FALSE(cpu->error);
 }
 
+void ExecuteFlagOperation(ICpu *cpu, std::shared_ptr<Memory> mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+    cpu->Reset();
+    cpu->a = a;
+    cpu->x = x;
+    cpu->y = y;
+    cpu->s = s;
+    mem->Write(0x8000, opcode);
+    if (flags!= nullptr) cpu->p = *flags;
+    cpu->Cycle();
+    EXPECT_EQ(cpu->pc, 0x8001);
+    EXPECT_FALSE(cpu->error);
+}
+
 void ExecuteZeroPage(ICpu *cpu, std::shared_ptr<Memory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;

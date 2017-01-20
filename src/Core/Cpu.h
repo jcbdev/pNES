@@ -52,6 +52,10 @@ public:
     void Cpx();
     void Cpy();
     void Dec();
+    void Eor();
+    void FlagClear(bool &flag);
+    void FlagSet(bool &flag);
+
     void Ldx();
 
     void Immediate(void (Cpu::*opcode)(), bool rmw, bool write);

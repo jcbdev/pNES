@@ -285,6 +285,75 @@ TEST_F(CpuTest, CpyAllAddressingModes){
     EXPECT_nvidzc(cpu, true, false, false, true, false, false);
 }
 
+TEST_F(CpuTest, DecSimple){
+    ExecuteZeroPage(cpu, mem, 0xC6, 0x11, nullptr);
+    EXPECT_ZeroPage(mem, 0x10);
+}
+
+TEST_F(CpuTest, DecNegative){
+    ExecuteZeroPage(cpu, mem, 0xC6, 0x00, nullptr);
+    EXPECT_ZeroPage(mem, 0xFF);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, DecZero){
+    ExecuteZeroPage(cpu, mem, 0xC6, 0x01, nullptr);
+    EXPECT_ZeroPage(mem, 0x00);
+    EXPECT_nvidzc(cpu, false, false, false, true, true, false);
+}
+
+TEST_F(CpuTest, DecAllAddressingModes){
+    ExecuteZeroPage(cpu, mem, 0xC6, 0x11, nullptr);
+    EXPECT_ZeroPage(mem, 0x10);
+    ExecuteZeroPageX(cpu, mem, 0xD6, 0x11, nullptr);
+    EXPECT_ZeroPageX(mem, 0x10);
+    ExecuteAbsolute(cpu, mem, 0xCE, 0x11, nullptr);
+    EXPECT_Absolute(mem, 0x10);
+    ExecuteAbsoluteX(cpu, mem, 0xDE, 0x11, nullptr);
+    EXPECT_AbsoluteX(mem, 0x10);
+}
+
+TEST_F(CpuTest, EorSimple) {
+    ExecuteImmediate(cpu, mem, 0x49, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, EorNegatve) {
+    ExecuteImmediate(cpu, mem, 0x49, 0xFF, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0xFF);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, EorZero) {
+    ExecuteImmediate(cpu, mem, 0x49, 0xFF, nullptr, 0xFF);
+    EXPECT_EQ(cpu->a, 0x00);
+    EXPECT_nvidzc(cpu, false, false, false, true, true, false);
+}
+
+TEST_F(CpuTest, EorAllAddressingModes) {
+    ExecuteImmediate(cpu, mem, 0x49, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+    ExecuteZeroPage(cpu, mem, 0x45, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+    ExecuteZeroPageX(cpu, mem, 0x55, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+    ExecuteAbsolute(cpu, mem, 0x4D, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+    ExecuteAbsoluteX(cpu, mem, 0x5D, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+    ExecuteAbsoluteY(cpu, mem, 0x59, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+    ExecuteIndirectX(cpu, mem, 0x41, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+    ExecuteIndirectY(cpu, mem, 0x51, 0xAA, nullptr, 0xAB);
+    EXPECT_EQ(cpu->a, 0x01);
+}
+
+TEST_F(CpuTest, ClearFlags) {
+
+}
+
 TEST_F(CpuTest, LdxZeroPageYAddressing) {
     ExecuteZeroPageY(cpu, mem, 0xB6, 0xAB, nullptr, 0x00, 0x00, 0x01);
     EXPECT_EQ(cpu->x, 0xAB);

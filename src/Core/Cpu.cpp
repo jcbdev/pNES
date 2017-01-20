@@ -107,6 +107,31 @@ void Cpu::Cycle() {
         case 0xC4: Read(&Cpu::Zeropage, &Cpu::Cpy); break;
         case 0xCC: Read(&Cpu::Absolute, &Cpu::Cpy); break;
 
+        //Dec
+        case 0xC6: Rmw(&Cpu::Zeropage, &Cpu::Dec); break;
+        case 0xD6: Rmw(&Cpu::ZeropageX, &Cpu::Dec); break;
+        case 0xCE: Rmw(&Cpu::Absolute, &Cpu::Dec); break;
+        case 0xDE: Rmw(&Cpu::AbsoluteX, &Cpu::Dec); break;
+
+        //Eor
+        case 0x49: Read(&Cpu::Immediate, &Cpu::Eor); break;
+        case 0x45: Read(&Cpu::Zeropage, &Cpu::Eor); break;
+        case 0x55: Read(&Cpu::ZeropageX, &Cpu::Eor); break;
+        case 0x4D: Read(&Cpu::Absolute, &Cpu::Eor); break;
+        case 0x5D: Read(&Cpu::AbsoluteX, &Cpu::Eor); break;
+        case 0x59: Read(&Cpu::AbsoluteY, &Cpu::Eor); break;
+        case 0x41: Read(&Cpu::IndirectX, &Cpu::Eor); break;
+        case 0x51: Read(&Cpu::IndirectY, &Cpu::Eor); break;
+
+        //Processor Status
+        case 0x18: FlagClear(p.c); break; //CLC
+        case 0x38: FlagSet(p.c); break; //SEC
+        case 0x58: FlagClear(p.i); break; //CLI
+        case 0x78: FlagSet(p.i); break; //SEI
+        case 0xB8: FlagClear(p.v); break; //CLV
+        case 0xD8: FlagClear(p.d); break; //CLD
+        case 0xF8: FlagSet(p.d); break; //SED
+
         //Ldx
         case 0xB6: Read(&Cpu::ZeropageY, &Cpu::Ldx); break;
 
@@ -194,7 +219,25 @@ void Cpu::Cpy(){
 }
 
 void Cpu::Dec(){
-    
+    _val--;
+    p.n = (_val & 0x80);
+    p.z = (_val == 0);
+}
+
+void Cpu::Eor(){
+    a ^= _val;
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
+void Cpu::FlagClear(bool &flag){
+    _readPc();
+    flag = false;
+}
+
+void Cpu::FlagSet(bool &flag){
+    _readPc();
+    flag = true;
 }
 
 void Cpu::Ldx() {
