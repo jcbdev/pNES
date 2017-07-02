@@ -351,8 +351,61 @@ TEST_F(CpuTest, EorAllAddressingModes) {
 }
 
 TEST_F(CpuTest, ClearFlags) {
-
+    CpuFlags p = nvdizc(false, false, false, true, false, true);
+    ExecuteFlagOperation(cpu, mem, 0x18, &p);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, false);
+    p = nvdizc(false, false, false, true, false, false);
+    ExecuteFlagOperation(cpu, mem, 0x58, &p);
+    EXPECT_nvidzc(cpu, false, false, false, false, false, false);
+    p = nvdizc(false, true, false, true, false, false);
+    ExecuteFlagOperation(cpu, mem, 0xB8, &p);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, false);
+    p = nvdizc(false, false, true, true, false, false);
+    ExecuteFlagOperation(cpu, mem, 0xD8, &p);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, false);
 }
+
+TEST_F(CpuTest, SetFlags) {
+    CpuFlags p = nvdizc(false, false, false, true, false, false);
+    ExecuteFlagOperation(cpu, mem, 0x38, &p);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, true);
+    p = nvdizc(false, false, false, false, false, false);
+    ExecuteFlagOperation(cpu, mem, 0x78, &p);
+    EXPECT_nvidzc(cpu, false, false, false, true, false, false);
+    p = nvdizc(false, false, false, true, false, false);
+    ExecuteFlagOperation(cpu, mem, 0xF8, &p);
+    EXPECT_nvidzc(cpu, false, false, true, true, false, false);
+}
+
+TEST_F(CpuTest, IncSimple){
+    ExecuteZeroPage(cpu, mem, 0xE6, 0x11, nullptr);
+    EXPECT_ZeroPage(mem, 0x12);
+}
+
+TEST_F(CpuTest, IncNegative){
+    ExecuteZeroPage(cpu, mem, 0xE6, 0xFE, nullptr);
+    EXPECT_ZeroPage(mem, 0xFF);
+    EXPECT_nvidzc(cpu, true, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, IncZero){
+    ExecuteZeroPage(cpu, mem, 0xE6, 0xFF, nullptr);
+    EXPECT_ZeroPage(mem, 0x00);
+    EXPECT_nvidzc(cpu, false, false, false, true, true, false);
+}
+
+TEST_F(CpuTest, IncAllAddressingModes){
+    ExecuteZeroPage(cpu, mem, 0xE6, 0x11, nullptr);
+    EXPECT_ZeroPage(mem, 0x12);
+    ExecuteZeroPageX(cpu, mem, 0xF6, 0x11, nullptr);
+    EXPECT_ZeroPageX(mem, 0x12);
+    ExecuteAbsolute(cpu, mem, 0xEE, 0x11, nullptr);
+    EXPECT_Absolute(mem, 0x12);
+    ExecuteAbsoluteX(cpu, mem, 0xFE, 0x11, nullptr);
+    EXPECT_AbsoluteX(mem, 0x12);
+}
+
+
 
 TEST_F(CpuTest, LdxZeroPageYAddressing) {
     ExecuteZeroPageY(cpu, mem, 0xB6, 0xAB, nullptr, 0x00, 0x00, 0x01);

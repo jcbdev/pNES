@@ -132,6 +132,12 @@ void Cpu::Cycle() {
         case 0xD8: FlagClear(p.d); break; //CLD
         case 0xF8: FlagSet(p.d); break; //SED
 
+        //Inc
+        case 0xE6: Rmw(&Cpu::Zeropage, &Cpu::Inc); break;
+        case 0xF6: Rmw(&Cpu::ZeropageX, &Cpu::Inc); break;
+        case 0xEE: Rmw(&Cpu::Absolute, &Cpu::Inc); break;
+        case 0xFE: Rmw(&Cpu::AbsoluteX, &Cpu::Inc); break;
+
         //Ldx
         case 0xB6: Read(&Cpu::ZeropageY, &Cpu::Ldx); break;
 
@@ -238,6 +244,28 @@ void Cpu::FlagClear(bool &flag){
 void Cpu::FlagSet(bool &flag){
     _readPc();
     flag = true;
+}
+
+void Cpu::Inc(){
+    _val++;
+    p.n = (_val & 0x80);
+    p.z = (_val == 0);
+}
+
+void Cpu::JmpAbsolute(){
+    _addr16.l = _readPcAndInc();
+    _addr16.h = _readPcAndInc();
+    pc = _addr16.w;
+}
+
+void Cpu::JmpIndirect() {
+    _addr16.l = _readPcAndInc();
+    _addr16.h = _readPcAndInc();
+    Address16 indirectAddr;
+
+    indirectAddr.l = _mem->Read(_addr16.w); _addr16.l++;
+    indirectAddr.h = _mem->Read(_addr16.w); _addr16.l++;
+    pc = indirectAddr.w;
 }
 
 void Cpu::Ldx() {

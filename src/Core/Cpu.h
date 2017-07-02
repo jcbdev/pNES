@@ -55,7 +55,9 @@ public:
     void Eor();
     void FlagClear(bool &flag);
     void FlagSet(bool &flag);
-
+    void Inc();
+    void JmpAbsolute();
+    void JmpIndirect();
     void Ldx();
 
     void Immediate(void (Cpu::*opcode)(), bool rmw, bool write);
