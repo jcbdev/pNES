@@ -4,7 +4,7 @@
 
 #include "Cpu.h"
 
-ICpu::ICpu(std::shared_ptr<Memory> &memory) {
+ICpu::ICpu(std::shared_ptr<IMemory> &memory) {
     x = 0;
     y = 0;
     a = 0;
@@ -16,7 +16,7 @@ ICpu::ICpu(std::shared_ptr<Memory> &memory) {
     error = false;
 }
 
-Cpu::Cpu(std::shared_ptr<Memory>& memory) : ICpu::ICpu(memory) {
+Cpu::Cpu(std::shared_ptr<IMemory>& memory) : ICpu::ICpu(memory) {
 
 }
 
@@ -137,6 +137,10 @@ void Cpu::Cycle() {
         case 0xF6: Rmw(&Cpu::ZeropageX, &Cpu::Inc); break;
         case 0xEE: Rmw(&Cpu::Absolute, &Cpu::Inc); break;
         case 0xFE: Rmw(&Cpu::AbsoluteX, &Cpu::Inc); break;
+
+        //Jmp
+        case 0x4c: JmpAbsolute(); break;
+        case 0x6c: JmpIndirect(); break;
 
         //Ldx
         case 0xB6: Read(&Cpu::ZeropageY, &Cpu::Ldx); break;
@@ -262,7 +266,6 @@ void Cpu::JmpIndirect() {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
     Address16 indirectAddr;
-
     indirectAddr.l = _mem->Read(_addr16.w); _addr16.l++;
     indirectAddr.h = _mem->Read(_addr16.w); _addr16.l++;
     pc = indirectAddr.w;

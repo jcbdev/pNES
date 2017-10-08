@@ -12,7 +12,7 @@
 
 class ICpu {
 public:
-    ICpu(std::shared_ptr<Memory>&  memory);
+    ICpu(std::shared_ptr<IMemory>&  memory);
 
     uint8_t x;
     uint8_t y;
@@ -27,12 +27,12 @@ public:
     bool error;
 
 protected:
-    std::shared_ptr<Memory> _mem;
+    std::shared_ptr<IMemory> _mem;
 };
 
 class Cpu : public ICpu {
 public:
-    Cpu(std::shared_ptr<Memory>&  memory);
+    Cpu(std::shared_ptr<IMemory>&  memory);
 
     virtual void Reset();
     virtual void Cycle();

@@ -2,9 +2,6 @@
 // Created by James Barker on 20/11/2016.
 //
 
-#include <gtest/gtest.h>
-#include "../../src/Core/Memory.h"
-#include "../../src/Core/Cpu.h"
 #include "CpuTests.h"
 
 TEST_F(CpuTest, AdcSimple) {
@@ -405,7 +402,13 @@ TEST_F(CpuTest, IncAllAddressingModes){
     EXPECT_AbsoluteX(mem, 0x12);
 }
 
+TEST_F(CpuTest, JmpAbsolute){
+    ExecuteJmpAbsolute(cpu, mem, 0x4c, nullptr);
+}
 
+TEST_F(CpuTest, JmpIndirect){
+    ExecuteJmpIndirect(cpu, mem, 0x6c, nullptr);
+}
 
 TEST_F(CpuTest, LdxZeroPageYAddressing) {
     ExecuteZeroPageY(cpu, mem, 0xB6, 0xAB, nullptr, 0x00, 0x00, 0x01);

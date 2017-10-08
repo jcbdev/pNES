@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 
-set(REPO ~/ClionProjects/.repo)
+set(REPO ../repo)
 
 project(Test)
 
@@ -20,7 +20,6 @@ download_project(
 
 add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
 
-set(test_SRCS Core/CpuTests.cpp)
+set(test_SRCS Core/CpuTests.cpp Core/MemoryStub.cpp Core/MemoryStub.h)
 add_executable(runUnitTests gtest.cpp ${test_SRCS})
 target_link_libraries(runUnitTests gtest gmock core)
-#add_test(runUnitTests runUnitTests) #included in all tutorials but I don't know what it actually does.

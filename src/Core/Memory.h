@@ -7,11 +7,27 @@
 
 
 #include <cstdint>
+#include "../Rom/Cart.h"
 
-class Memory {
+class IMemory {
+public:
+    virtual void Write(uint16_t addr, uint8_t value) = 0;
+    virtual void WriteZP(uint8_t addr, uint8_t value) = 0;
+    virtual void WriteRange(uint16_t start, uint16_t end, uint8_t value) = 0;
+    virtual uint8_t Read(uint16_t addr) = 0;
+    virtual uint8_t ReadZP(uint8_t addr) = 0;
+    virtual void PageIfRequired(uint16_t addr1, uint16_t addr2) = 0;
+    virtual void ForcedPage(uint16_t addr1, uint16_t addr2) = 0;
+
+    virtual void Reset() = 0;
+    IMemory() {};
+};
+
+class Memory : public IMemory {
 private:
 
     uint8_t _ram[0x0800];
+    Cart* _cart;
 
     //TODO: rest of hardware address bus
     uint8_t _other[0xFFFF];
@@ -26,7 +42,7 @@ public:
 
     void Reset();
 
-    Memory();
+    Memory(Cart *cart);
 };
 
 
