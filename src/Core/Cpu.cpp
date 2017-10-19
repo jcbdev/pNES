@@ -4,19 +4,24 @@
 
 #include "Cpu.h"
 
-ICpu::ICpu(std::shared_ptr<IMemory> &memory) {
+ICpu::ICpu(IMemory* memory, ILogger* logger) {
     x = 0;
     y = 0;
     a = 0;
     p = 0x34;
     s = 0xFD;
-    pc = 0x8000;
-
     _mem = memory;
+    Address16 pcaddr;
+    pcaddr.l = _mem->Read(0xFFFC);
+    pcaddr.h = _mem->Read(0xFFFD);
+    pc = pcaddr.w;
+//    pc = 0x8000;
+
     error = false;
+    _logger = logger;
 }
 
-Cpu::Cpu(std::shared_ptr<IMemory>& memory) : ICpu::ICpu(memory) {
+Cpu::Cpu(IMemory* memory, ILogger* logger) : ICpu::ICpu(memory, logger) {
 
 }
 
@@ -34,7 +39,11 @@ void Cpu::Reset() {
     a = 0;
     p = 0x34;
     s = 0xFD;
-    pc = 0x8000;
+    Address16 pcaddr;
+    pcaddr.l = _mem->Read(0xFFFC);
+    pcaddr.h = _mem->Read(0xFFFD);
+    pc = pcaddr.w;
+//    pc = 0x8000;
 
     _mem->Reset();
     error = false;
@@ -112,6 +121,8 @@ void Cpu::Cycle() {
         case 0xD6: Rmw(&Cpu::ZeropageX, &Cpu::Dec); break;
         case 0xCE: Rmw(&Cpu::Absolute, &Cpu::Dec); break;
         case 0xDE: Rmw(&Cpu::AbsoluteX, &Cpu::Dec); break;
+        case 0xCA: Dex(); break;
+        case 0x88: Dey(); break;
 
         //Eor
         case 0x49: Read(&Cpu::Immediate, &Cpu::Eor); break;
@@ -137,13 +148,116 @@ void Cpu::Cycle() {
         case 0xF6: Rmw(&Cpu::ZeropageX, &Cpu::Inc); break;
         case 0xEE: Rmw(&Cpu::Absolute, &Cpu::Inc); break;
         case 0xFE: Rmw(&Cpu::AbsoluteX, &Cpu::Inc); break;
+        case 0xE8: Inx(); break;
+        case 0xC8: Iny(); break;
 
         //Jmp
         case 0x4c: JmpAbsolute(); break;
         case 0x6c: JmpIndirect(); break;
 
+        //Jsr
+        case 0x20: Jsr(); break;
+
+        //Lda
+        case 0xA9: Read(&Cpu::Immediate, &Cpu::Lda); break;
+        case 0xA5: Read(&Cpu::Zeropage, &Cpu::Lda); break;
+        case 0xB5: Read(&Cpu::ZeropageX, &Cpu::Lda); break;
+        case 0xAD: Read(&Cpu::Absolute, &Cpu::Lda); break;
+        case 0xBD: Read(&Cpu::AbsoluteX, &Cpu::Lda); break;
+        case 0xB9: Read(&Cpu::AbsoluteY, &Cpu::Lda); break;
+        case 0xA1: Read(&Cpu::IndirectX, &Cpu::Lda); break;
+        case 0xB1: Read(&Cpu::IndirectY, &Cpu::Lda); break;
+
         //Ldx
+        case 0xA2: Read(&Cpu::Immediate, &Cpu::Ldx); break;
+        case 0xA6: Read(&Cpu::Zeropage, &Cpu::Ldx); break;
         case 0xB6: Read(&Cpu::ZeropageY, &Cpu::Ldx); break;
+        case 0xAE: Read(&Cpu::Absolute, &Cpu::Ldx); break;
+        case 0xBE: Read(&Cpu::AbsoluteY, &Cpu::Ldx); break;
+
+        //Ldy
+        case 0xA0: Read(&Cpu::Immediate, &Cpu::Ldy); break;
+        case 0xA4: Read(&Cpu::Zeropage, &Cpu::Ldy); break;
+        case 0xB4: Read(&Cpu::ZeropageY, &Cpu::Ldy); break;
+        case 0xAC: Read(&Cpu::Absolute, &Cpu::Ldy); break;
+        case 0xBC: Read(&Cpu::AbsoluteY, &Cpu::Ldy); break;
+
+        //Lsr
+        case 0x4A: LsrAccumulator(); break;
+        case 0x46: Read(&Cpu::Zeropage, &Cpu::Lsr); break;
+        case 0x56: Read(&Cpu::ZeropageX, &Cpu::Lsr); break;
+        case 0x4E: Read(&Cpu::Absolute, &Cpu::Lsr); break;
+        case 0x5E: Read(&Cpu::AbsoluteX, &Cpu::Lsr); break;
+
+        //Nop
+        case 0xEA: Cpu::Nop(); break;
+
+        //Ora
+        case 0x09: Read(&Cpu::Immediate, &Cpu::Ora); break;
+        case 0x05: Read(&Cpu::Zeropage, &Cpu::Ora); break;
+        case 0x15: Read(&Cpu::ZeropageX, &Cpu::Ora); break;
+        case 0x0D: Read(&Cpu::Absolute, &Cpu::Ora); break;
+        case 0x1D: Read(&Cpu::AbsoluteX, &Cpu::Ora); break;
+        case 0x19: Read(&Cpu::AbsoluteY, &Cpu::Ora); break;
+        case 0x01: Read(&Cpu::IndirectX, &Cpu::Ora); break;
+        case 0x11: Read(&Cpu::IndirectY, &Cpu::Ora); break;
+
+        //Rol
+        case 0x2A: RolAccumulator(); break;
+        case 0x26: Rmw(&Cpu::Zeropage, &Cpu::Rol); break;
+        case 0x36: Rmw(&Cpu::ZeropageX, &Cpu::Rol); break;
+        case 0x2E: Rmw(&Cpu::Absolute, &Cpu::Rol); break;
+        case 0x3E: Rmw(&Cpu::AbsoluteX, &Cpu::Rol); break;
+
+        //Ror
+        case 0x6A: RorAccumulator(); break;
+        case 0x66: Rmw(&Cpu::Zeropage, &Cpu::Ror); break;
+        case 0x76: Rmw(&Cpu::ZeropageX, &Cpu::Ror); break;
+        case 0x6E: Rmw(&Cpu::Absolute, &Cpu::Ror); break;
+        case 0x7E: Rmw(&Cpu::AbsoluteX, &Cpu::Ror); break;
+
+        //Rti
+        case 0x40: Rti(); break;
+
+        //Rts
+        case 0x60: Rts(); break;
+
+        //Sbc
+        case 0xE9: Read(&Cpu::Immediate, &Cpu::Sbc); break;
+        case 0xE5: Read(&Cpu::Zeropage, &Cpu::Sbc); break;
+        case 0xF5: Read(&Cpu::ZeropageX, &Cpu::Sbc); break;
+        case 0xED: Read(&Cpu::Absolute, &Cpu::Sbc); break;
+        case 0xFD: Read(&Cpu::AbsoluteX, &Cpu::Sbc); break;
+        case 0xF9: Read(&Cpu::AbsoluteY, &Cpu::Sbc); break;
+        case 0xE1: Read(&Cpu::IndirectX, &Cpu::Sbc); break;
+        case 0xF1: Read(&Cpu::IndirectY, &Cpu::Sbc); break;
+
+        //Sta
+        case 0x85: Store(&Cpu::Zeropage, &Cpu::Sta); break;
+        case 0x95: Store(&Cpu::ZeropageX, &Cpu::Sta); break;
+        case 0x8D: Store(&Cpu::Absolute, &Cpu::Sta); break;
+        case 0x9D: Store(&Cpu::AbsoluteX, &Cpu::Sta); break;
+        case 0x99: Store(&Cpu::AbsoluteY, &Cpu::Sta); break;
+        case 0x81: Store(&Cpu::IndirectX, &Cpu::Sta); break;
+        case 0x91: Store(&Cpu::IndirectY, &Cpu::Sta); break;
+
+        //Stx
+        case 0x86: Store(&Cpu::Zeropage, &Cpu::Stx); break;
+        case 0x96: Store(&Cpu::ZeropageY, &Cpu::Stx); break;
+        case 0x8E: Store(&Cpu::Absolute, &Cpu::Stx); break;
+
+        //Sty
+        case 0x84: Store(&Cpu::Zeropage, &Cpu::Sty); break;
+        case 0x94: Store(&Cpu::ZeropageX, &Cpu::Sty); break;
+        case 0x8C: Store(&Cpu::Absolute, &Cpu::Sty); break;
+
+        //Transfer
+        case 0xAA: Cpu::Tax(); break;
+        case 0x8A: Cpu::Txa(); break;
+        case 0xA8: Cpu::Tay(); break;
+        case 0x98: Cpu::Tya(); break;
+        case 0x9A: Cpu::Txs(); break;
+        case 0xBA: Cpu::Tsx(); break;
 
         default: error = true; break;
     }
@@ -234,6 +348,20 @@ void Cpu::Dec(){
     p.z = (_val == 0);
 }
 
+void Cpu::Dex(){
+    _readPc();
+    x--;
+    p.n = (x & 0x80);
+    p.z = (x == 0);
+};
+
+void Cpu::Dey(){
+    _readPc();
+    y--;
+    p.n = (y & 0x80);
+    p.z = (y == 0);
+}
+
 void Cpu::Eor(){
     a ^= _val;
     p.n = (a & 0x80);
@@ -256,6 +384,20 @@ void Cpu::Inc(){
     p.z = (_val == 0);
 }
 
+void Cpu::Inx(){
+    _readPc();
+    x++;
+    p.n = (x & 0x80);
+    p.z = (x == 0);
+}
+
+void Cpu::Iny(){
+    _readPc();
+    y++;
+    p.n = (y & 0x80);
+    p.z = (y == 0);
+}
+
 void Cpu::JmpAbsolute(){
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
@@ -271,10 +413,169 @@ void Cpu::JmpIndirect() {
     pc = indirectAddr.w;
 }
 
+void Cpu::Jsr(){
+    _addr16.l = _readPcAndInc();
+    _addr16.h = _readPcAndInc();
+    _readPc();
+    pc--;
+    _writeSp((uint8_t)(pc >> 8));
+    _writeSp((uint8_t)(pc >> 0));
+    pc = _addr16.w;
+}
+
+void Cpu::Lda() {
+    a = _val;
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
 void Cpu::Ldx() {
     x = _val;
     p.n = x & 0x80;
     p.z = x == 0;
+}
+
+void Cpu::Ldy() {
+    y = _val;
+    p.n = (y & 0x80);
+    p.z = (y == 0);
+}
+
+void Cpu::Lsr() {
+    p.c = _val & 0x01;
+    _val >>= 1;
+    p.n = (_val & 0x80);
+    p.z = (_val == 0);
+}
+
+void Cpu::LsrAccumulator() {
+    _readPc();
+    p.c = a & 0x01;
+    a >>= 1;
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
+void Cpu::Nop(){
+    _readPc();
+}
+
+void Cpu::Ora(){
+    a |= _val;
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
+void Cpu::RolAccumulator(){
+    uint8_t carry = (uint8_t)p.c;
+    p.c = a & 0x80;
+    a = (a << 1) | carry;
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
+void Cpu::Rol() {
+    uint8_t carry = (uint8_t)p.c;
+    p.c = _val & 0x80;
+    _val = (_val << 1) | carry;
+    p.n = (_val & 0x80);
+    p.z = (_val == 0);
+}
+
+void Cpu::RorAccumulator() {
+    uint8_t carry = (uint8_t)p.c << 7;
+    p.c = a & 0x01;
+    a = carry | (a >> 1);
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
+void Cpu::Ror() {
+    uint8_t carry = (uint8_t)p.c << 7;
+    p.c = _val & 0x01;
+    _val = carry | (_val >> 1);
+    p.n = (_val & 0x80);
+    p.z = (_val == 0);
+}
+
+void Cpu::Rti() {
+    _readPc();
+    _readPc();
+    p = _readSp();
+    _addr16.l = _readSp();
+    _addr16.h = _readSp();
+    pc = _addr16.w;
+}
+
+void Cpu::Rts() {
+    _readPc();
+    _readPc();
+    _addr16.l = _readSp();
+    _addr16.h = _readSp();
+    _readPc();
+    pc = ++_addr16.w;
+}
+
+void Cpu::Sbc() {
+    _val ^= 0xff;
+    int16_t new_a = a + p.c + _val;
+    p.v = ~(a ^ _val) & (a ^ new_a) & 0x80;
+    p.c = new_a > 0xff;
+    p.n = new_a & 0x80;
+    p.z = ((uint8_t)new_a == 0);
+    a = new_a;
+}
+
+void Cpu::Sta() {
+    _val = a;
+}
+
+void Cpu::Stx() {
+    _val = x;
+}
+
+void Cpu::Sty(){
+    _val = y;
+}
+
+void Cpu::Tax() {
+    _readPc();
+    x = a;
+    p.n = (x & 0x80);
+    p.z = (x == 0);
+}
+
+void Cpu::Txa() {
+    _readPc();
+    a = x;
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
+void Cpu::Tay() {
+    _readPc();
+    y = a;
+    p.n = (y & 0x80);
+    p.z = (y == 0);
+}
+
+void Cpu::Tya() {
+    _readPc();
+    a = y;
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
+void Cpu::Txs() {
+    _readPc();
+    s = x;
+}
+
+void Cpu::Tsx() {
+    _readPc();
+    x = s;
+    p.n = (x & 0x80);
+    p.z = (x == 0);
 }
 
 void Cpu::Immediate(void (Cpu::*opcode)(), bool rmw, bool write) {
@@ -352,7 +653,7 @@ void Cpu::AbsoluteY(void (Cpu::*opcode)(), bool rmw, bool write) {
     _val = _mem->Read(_addr16.w + y);
     if (rmw) _mem->Write(_addr16.w + y, _val);
     (this->*opcode)();
-    if (write) _mem->Write(_addr16.w + x, _val);
+    if (write) _mem->Write(_addr16.w + y, _val);
 }
 
 void Cpu::Read(void (Cpu::*operation)(void (Cpu::*)(), bool, bool), void (Cpu::*opcode)()) {

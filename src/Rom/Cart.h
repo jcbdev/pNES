@@ -13,10 +13,10 @@
 
 class Cart {
 protected:
-    Logger *logger;
+    ILogger *logger;
     uint32_t romSize;
-    uint8_t** prgData;
-    uint8_t** chrData;
+//    uint8_t** prgData;
+//    uint8_t** chrData;
     uint8_t LowerPrgBank;
     uint8_t UpperPrgBank;
     uint8_t ChrBank;
@@ -32,7 +32,7 @@ public:
     RomType Type;
 
     void LoadRom(std::string romFile);
-    Cart(Logger *logger);
+    Cart(ILogger *logger);
     ~Cart();
 
     virtual uint8_t PrgRead(uint16_t addr);

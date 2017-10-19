@@ -15,7 +15,7 @@ struct Address16 {
 struct CpuFlags {
     bool n, v, d, i, z, c;
 
-    inline operator unsigned() {
+    inline operator uint8_t() {
         return (n << 7) | (v << 6) | (d << 3) | (i << 2) | (z << 1) | (c << 0);
     }
 

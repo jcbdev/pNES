@@ -23,11 +23,15 @@ public:
     IMemory() {};
 };
 
-class Memory : public IMemory {
+class CpuMemory : public IMemory {
 private:
 
     uint8_t _ram[0x0800];
+    uint8_t _ppuregs[0x08];
+    uint8_t _nesapu[0x18];
+    uint8_t _apu[0x08];
     Cart* _cart;
+
 
     //TODO: rest of hardware address bus
     uint8_t _other[0xFFFF];
@@ -42,7 +46,7 @@ public:
 
     void Reset();
 
-    Memory(Cart *cart);
+    CpuMemory(Cart *cart);
 };
 
 

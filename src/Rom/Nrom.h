@@ -13,6 +13,9 @@ public:
     void PrgWrite(uint16_t addr, uint8_t data);
     uint8_t ChrRead(uint16_t addr);
     void ChrWrite(uint16_t addr, uint8_t data);
+
+    Nrom(ILogger *logger);
+    ~Nrom();
 };
 
 

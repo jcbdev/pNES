@@ -102,26 +102,28 @@ void Cart::SetBanks() {
         prgsize = (Header.PrgRomSize + (Header.PrgRomHigher() << 8));
         chrsize = (Header.ChrRomSize + (Header.ChrRomHigher() << 8));
     }
-    prgData = new uint8_t*[prgsize];
-    for (int i=0; i<prgsize; i++)
-        prgData[i] = (uint8_t*)&romData[16 + (i * 0x4000)];
-
-    chrData = new uint8_t*[chrsize];
-    for (int i=0; i<chrsize; i++)
-        chrData[i] = (uint8_t*)&romData[16 + ((prgsize-1)*0x4000) + (i * 0x2000)];
+//    prgData = new uint8_t*[prgsize];
+//    for (int i=0; i<prgsize; i++) {
+//        prgData[i] = (uint8_t*) &romData[(uint8_t)(16 + (i * 0x4000))];
+//    }
+//
+//    chrData = new uint8_t*[chrsize];
+//    for (int i=0; i<chrsize; i++) {
+//        chrData[i] = (uint8_t *)&romData[(uint8_t)(16 + ((prgsize - 1) * 0x4000) + (i * 0x2000))];
+//    }
 
     LowerPrgBank = 0;
-    UpperPrgBank = 0;
+    UpperPrgBank = Header.PrgRomSize-1;
 }
 
-Cart::Cart(Logger *logger) {
+Cart::Cart(ILogger *logger) {
     this->logger = logger;
 }
 
 Cart::~Cart(){
     free(romData);
-    free(prgData);
-    free(chrData);
+//    free(prgData);
+//    free(chrData);
 }
 
 uint8_t Cart::PrgRead(uint16_t addr) {

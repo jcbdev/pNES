@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include "../../src/Core/Memory.h"
 #include "MemoryStub.h"
+#include "LoggerStub.h"
 #include "../../src/Core/Cpu.h"
 
 CpuFlags nvdizc(bool n = false, bool v = false, bool d = false, bool i = true, bool z = false, bool c = false) {
@@ -22,7 +23,7 @@ CpuFlags nvdizc(bool n = false, bool v = false, bool d = false, bool i = true, b
     return flags;
 }
 
-void ExecuteImmediate(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteImmediate(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -36,7 +37,7 @@ void ExecuteImmediate(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, u
     EXPECT_FALSE(cpu->error);
 }
 
-void ExecuteAccumulator(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteAccumulator(ICpu *cpu, IMemory* mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -49,7 +50,7 @@ void ExecuteAccumulator(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode,
     EXPECT_FALSE(cpu->error);
 }
 
-void ExecuteBrk(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t l, uint8_t h, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteBrk(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t l, uint8_t h, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -68,7 +69,7 @@ void ExecuteBrk(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t
     EXPECT_FALSE(cpu->error);
 }
 
-void ExecuteBranch(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, bool branches, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteBranch(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, bool branches, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -83,7 +84,7 @@ void ExecuteBranch(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint
     EXPECT_FALSE(cpu->error);
 }
 
-void ExecuteFlagOperation(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteFlagOperation(ICpu *cpu, IMemory* mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -96,7 +97,7 @@ void ExecuteFlagOperation(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcod
     EXPECT_FALSE(cpu->error);
 }
 
-void ExecuteZeroPage(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteZeroPage(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -111,11 +112,11 @@ void ExecuteZeroPage(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, ui
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_ZeroPage(std::shared_ptr<IMemory> mem, uint8_t value){
+void EXPECT_ZeroPage(IMemory* mem, uint8_t value){
     EXPECT_EQ(mem->Read(0x001F), value);
 }
 
-void ExecuteZeroPageX(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteZeroPageX(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -131,12 +132,16 @@ void ExecuteZeroPageX(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, u
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_ZeroPageX(std::shared_ptr<IMemory> mem, uint8_t value){
+void EXPECT_ZeroPageX(IMemory* mem, uint8_t value){
     EXPECT_EQ(mem->Read(0x0020), value);
 }
 
-void ExecuteZeroPageY(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteZeroPageY(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
+    cpu->a = a;
+    cpu->x = x;
+    cpu->y = y;
+    cpu->s = s;
     mem->Write(0x0020, value);
     mem->Write(0x8000, opcode);
     mem->Write(0x8001, 0x1F);
@@ -147,11 +152,11 @@ void ExecuteZeroPageY(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, u
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_ZeroPageY(std::shared_ptr<IMemory> mem, uint8_t value){
+void EXPECT_ZeroPageY(IMemory* mem, uint8_t value){
     EXPECT_EQ(mem->Read(0x0020), value);
 }
 
-void ExecuteAbsolute(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteAbsolute(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -167,11 +172,11 @@ void ExecuteAbsolute(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, ui
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_Absolute(std::shared_ptr<IMemory> mem, uint8_t value){
+void EXPECT_Absolute(IMemory* mem, uint8_t value){
     EXPECT_EQ(mem->Read(0x8180), value);
 }
 
-void ExecuteAbsoluteX(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteAbsoluteX(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -188,11 +193,11 @@ void ExecuteAbsoluteX(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, u
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_AbsoluteX(std::shared_ptr<IMemory> mem, uint8_t value){
+void EXPECT_AbsoluteX(IMemory* mem, uint8_t value){
     EXPECT_EQ(mem->Read(0x8181), value);
 }
 
-void ExecuteAbsoluteY(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteAbsoluteY(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -209,11 +214,11 @@ void ExecuteAbsoluteY(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, u
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_AbsoluteY(std::shared_ptr<IMemory> mem, uint8_t value){
+void EXPECT_AbsoluteY(IMemory* mem, uint8_t value){
     EXPECT_EQ(mem->Read(0x8181), value);
 }
 
-void ExecuteIndirectX(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteIndirectX(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -231,11 +236,11 @@ void ExecuteIndirectX(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, u
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_IndirectX(std::shared_ptr<IMemory> mem, uint8_t value){
+void EXPECT_IndirectX(IMemory* mem, uint8_t value){
     EXPECT_EQ(mem->Read(0x8180), value);
 }
 
-void ExecuteIndirectY(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteIndirectY(ICpu *cpu, IMemory* mem, uint8_t opcode, uint8_t value, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -253,11 +258,11 @@ void ExecuteIndirectY(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, u
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_IndirectY(std::shared_ptr<IMemory> mem, uint8_t value){
+void EXPECT_IndirectY(IMemory* mem, uint8_t value){
     EXPECT_EQ(mem->Read(0x8181), value);
 }
 
-void ExecuteJmpAbsolute(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteJmpAbsolute(ICpu *cpu, IMemory* mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
@@ -272,24 +277,89 @@ void ExecuteJmpAbsolute(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode,
     EXPECT_FALSE(cpu->error);
 }
 
-void ExecuteJmpIndirect(ICpu *cpu, std::shared_ptr<IMemory> mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+void ExecuteJmpIndirect(ICpu *cpu, IMemory* mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
     cpu->Reset();
     cpu->a = a;
     cpu->x = x;
     cpu->y = y;
     cpu->s = s;
-    mem->Write(0x001F, 0x81);
-    mem->Write(0x0020, 0x81);
+    mem->Write(0x801F, 0x81);
+    mem->Write(0x8020, 0x82);
     mem->Write(0x8000, opcode);
     mem->Write(0x8001, 0x1F);
-    mem->Write(0x8002, 0x20);
+    mem->Write(0x8002, 0x80);
     if (flags!=nullptr) cpu->p = *flags;
     cpu->Cycle();
-    EXPECT_EQ(cpu->pc, 0x8181);
+    EXPECT_EQ(cpu->pc, 0x8281);
     EXPECT_FALSE(cpu->error);
 }
 
-void EXPECT_nvidzc(ICpu *cpu, bool n = false, bool v = false, bool d = false, bool i = true, bool z = false, bool c = false) {
+void ExecuteJsr(ICpu *cpu, IMemory* mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+    cpu->Reset();
+    cpu->a = a;
+    cpu->x = x;
+    cpu->y = y;
+    cpu->s = s;
+    mem->Write(0x8000, opcode);
+    mem->Write(0x8001, 0x1F);
+    mem->Write(0x8002, 0x80);
+    if (flags!=nullptr) cpu->p = *flags;
+    cpu->Cycle();
+    EXPECT_EQ(cpu->pc, 0x801F);
+    EXPECT_EQ(mem->Read(0x1FD), 0x80);
+    EXPECT_EQ(mem->Read(0x1FC), 0x02);
+    EXPECT_FALSE(cpu->error);
+}
+
+void ExecuteNop(ICpu *cpu, IMemory* mem, uint8_t opcode, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+    cpu->Reset();
+    cpu->a = a;
+    cpu->x = x;
+    cpu->y = y;
+    cpu->s = s;
+    mem->Write(0x8000, opcode);
+    if (flags!=nullptr) cpu->p = *flags;
+    cpu->Cycle();
+    EXPECT_EQ(cpu->pc, 0x8001);
+    EXPECT_FALSE(cpu->error);
+}
+
+void ExecuteRti(ICpu *cpu, IMemory* mem, uint8_t opcode, uint16_t address, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+    cpu->Reset();
+    cpu->a = a;
+    cpu->x = x;
+    cpu->y = y;
+    cpu->s = s;
+    Address16 addr;
+    addr.w = address;
+    mem->Write(0x0100 | cpu->s--, addr.h);
+    mem->Write(0x0100 | cpu->s--, addr.l);
+    mem->Write(0x0100 | cpu->s--, (uint8_t)*flags);
+    mem->Write(0x8000, opcode);
+    if (flags!=nullptr) cpu->p = *flags;
+    cpu->Cycle();
+    EXPECT_EQ(cpu->pc, addr.w);
+    EXPECT_EQ((uint8_t)cpu->p, (uint8_t)*flags);
+    EXPECT_FALSE(cpu->error);
+}
+
+void ExecuteRts(ICpu *cpu, IMemory* mem, uint8_t opcode, uint16_t address, CpuFlags *flags, uint8_t a=0, uint8_t x=0, uint8_t y=0, uint8_t s=0xFD) {
+    cpu->Reset();
+    cpu->a = a;
+    cpu->x = x;
+    cpu->y = y;
+    cpu->s = s;
+    Address16 addr;
+    addr.w = address;
+    mem->Write(0x0100 | cpu->s--, addr.h);
+    mem->Write(0x0100 | cpu->s--, addr.l);
+    mem->Write(0x8000, opcode);
+    cpu->Cycle();
+    EXPECT_EQ(cpu->pc, addr.w+1);
+    EXPECT_FALSE(cpu->error);
+}
+
+void EXPECT_nvdizc(ICpu *cpu, bool n = false, bool v = false, bool d = false, bool i = true, bool z = false, bool c = false) {
     EXPECT_EQ(cpu->p.v, v);
     EXPECT_EQ(cpu->p.c, c);
     EXPECT_EQ(cpu->p.n, n);
@@ -302,11 +372,17 @@ namespace {
     class CpuTest : public ::testing::Test {
     protected:
         virtual void SetUp() {
-            mem = std::make_shared<MemoryStub>();
-            cpu = new Cpu(mem);
+            mem = new MemoryStub();
+            logger = new LoggerStub();
+
+            cpu = new Cpu(mem, logger);
+            //emulate jmp from reset
+            mem->Write(0xFFFC, 0x00);
+            mem->Write(0xFFFD, 0x80);
         }
 
-        std::shared_ptr<IMemory> mem;
+        IMemory* mem;
+        ILogger* logger;
         ICpu *cpu;
     };
 }

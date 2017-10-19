@@ -8,14 +8,14 @@
 #include <string>
 #include <iostream>
 
-class Logger {
+class ILogger {
 public:
     virtual void Log(std::string log) = 0;
 };
 
-class ConsoleLogger : public Logger {
+class ConsoleLogger : public ILogger {
 public:
-    virtual void Log(std::string log);
+    void Log(std::string log);
 };
 
 
