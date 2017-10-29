@@ -75,22 +75,27 @@ public:
     void LsrAccumulator();
     void Nop();
     void Ora();
+    void Pha();
+    void Php();
+    void Pla();
+    void Plp();
     void Rol();
     void RolAccumulator();
     void Ror();
     void RorAccumulator();
-    void Tax();
-    void Txa();
-    void Tay();
-    void Tya();
-    void Txs();
-    void Tsx();
     void Rti();
     void Rts();
     void Sbc();
     void Sta();
     void Stx();
     void Sty();
+    void Tax();
+    void Txa();
+    void Tay();
+    void Tya();
+    void Txs();
+    void Tsx();
+
 
     void Immediate(void (Cpu::*opcode)(), bool rmw, bool write);
     void Zeropage(void (Cpu::*opcode)(), bool rmw, bool write);

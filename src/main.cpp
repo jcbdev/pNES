@@ -36,7 +36,7 @@ int main() {
     Cart *cart = new Nrom(logger);
     cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
     CpuMemory *memory = new CpuMemory(cart);
-    Cpu *cpu = new Cpu(memory);
+    Cpu *cpu = new Cpu(memory, logger);
 
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) != 0) {
         SDL_Log("Failed to initialize SDL: %s", SDL_GetError());
@@ -50,7 +50,7 @@ int main() {
     SDL_AddEventWatch(watch, NULL);
 
     cpu->Reset();
-    while(!quitting) {
+    while(!quitting && !cpu->error) {
 
         SDL_Event event;
         while( SDL_PollEvent(&event) ) {

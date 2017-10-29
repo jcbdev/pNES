@@ -50,8 +50,9 @@ void Cpu::Reset() {
 }
 
 void Cpu::Cycle() {
-
-    switch(_readPcAndInc()){
+    uint8_t opcode = _readPcAndInc();
+    _logger->Log(std::to_string(opcode));
+    switch(opcode){
         //ADC
         case 0x69: Read(&Cpu::Immediate, &Cpu::Adc); break;
         case 0x65: Read(&Cpu::Zeropage, &Cpu::Adc); break;
@@ -201,6 +202,14 @@ void Cpu::Cycle() {
         case 0x19: Read(&Cpu::AbsoluteY, &Cpu::Ora); break;
         case 0x01: Read(&Cpu::IndirectX, &Cpu::Ora); break;
         case 0x11: Read(&Cpu::IndirectY, &Cpu::Ora); break;
+
+        //Push
+        case 0x48: Pha(); break;
+        case 0x08: Php(); break;
+
+        //Pla
+        case 0x68: Pla(); break;
+        case 0x28: Plp(); break;
 
         //Rol
         case 0x2A: RolAccumulator(); break;
@@ -464,6 +473,30 @@ void Cpu::Ora(){
     a |= _val;
     p.n = (a & 0x80);
     p.z = (a == 0);
+}
+
+void Cpu::Pha(){
+    _readPc();
+    _writeSp(a);
+}
+
+void Cpu::Php(){
+    _readPc();
+    _writeSp(p | 0x30);
+}
+
+void Cpu::Pla(){
+    _readPc();
+    _readPc();
+    a = _readSp();
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+}
+
+void Cpu::Plp(){
+    _readPc();
+    _readPc();
+    p = _readSp();
 }
 
 void Cpu::RolAccumulator(){
