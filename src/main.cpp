@@ -59,6 +59,7 @@ int main() {
             }
         }
 
+        if (cpu->Interrupt()) continue;
         cpu->Cycle();
         render();
         SDL_Delay(2);

@@ -33,41 +33,57 @@
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googlemock/src/gmock-all.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googlemock/src/gmock_main.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googlemock/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googlemock/cmake/gmock_main.pc.in" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googlemock/cmake/gmock.pc.in" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googletest/src/gtest_main.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googletest/src/gtest-all.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googletest/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googletest/cmake/gtest_main.pc.in" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googletest/cmake/internal_utils.cmake" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Debug/googletest-src/googletest/cmake/gtest.pc.in" isTestSource="false" />
     </content>
     <content url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src">
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googlemock/src/gmock-all.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googlemock/src/gmock_main.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googlemock/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googlemock/cmake/gmock_main.pc.in" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googlemock/cmake/gmock.pc.in" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googletest/src/gtest_main.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googletest/src/gtest-all.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googletest/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googletest/cmake/gtest_main.pc.in" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googletest/cmake/internal_utils.cmake" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/MinSizeRel/googletest-src/googletest/cmake/gtest.pc.in" isTestSource="false" />
     </content>
     <content url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src">
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googlemock/src/gmock-all.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googlemock/src/gmock_main.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googlemock/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googlemock/cmake/gmock_main.pc.in" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googlemock/cmake/gmock.pc.in" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googletest/src/gtest_main.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googletest/src/gtest-all.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googletest/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googletest/cmake/gtest_main.pc.in" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googletest/cmake/internal_utils.cmake" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/RelWithDebInfo/googletest-src/googletest/cmake/gtest.pc.in" isTestSource="false" />
     </content>
     <content url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src">
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googlemock/src/gmock-all.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googlemock/src/gmock_main.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googlemock/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googlemock/cmake/gmock_main.pc.in" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googlemock/cmake/gmock.pc.in" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googletest/src/gtest_main.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googletest/src/gtest-all.cc" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googletest/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googletest/cmake/gtest.pc.in" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googletest/cmake/internal_utils.cmake" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/Library/Caches/CLion2016.2/cmake/generated/LittlePNes-257516b9/257516b9/Release/googletest-src/googletest/cmake/gtest_main.pc.in" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">

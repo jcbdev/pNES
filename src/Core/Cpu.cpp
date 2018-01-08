@@ -19,10 +19,15 @@ ICpu::ICpu(IMemory* memory, ILogger* logger) {
 
     error = false;
     _logger = logger;
+    ticks = 0;
 }
 
 Cpu::Cpu(IMemory* memory, ILogger* logger) : ICpu::ICpu(memory, logger) {
-
+    _interrupt_pending = false;
+    _nmi = false;
+    _nmi_pending = false;
+    _irq = false;
+    _apu = false;
 }
 
 uint8_t Cpu::_readPcAndInc() {
@@ -44,6 +49,11 @@ void Cpu::Reset() {
     pcaddr.h = _mem->Read(0xFFFD);
     pc = pcaddr.w;
 //    pc = 0x8000;
+
+    _nmi = false;
+    _nmi_pending = false;
+    _irq = false;
+    _apu = false;
 
     _mem->Reset();
     error = false;
@@ -152,9 +162,41 @@ void Cpu::Cycle() {
         case 0xE8: Inx(); break;
         case 0xC8: Iny(); break;
 
+        //Illegal
+        case 0x04: IllegalNopZeroPage(); break;
+        case 0x0C: IllegalNopAbsolute(); break;
+        case 0x14: IllegalNopZeroPageX(); break;
+        case 0x1A: IllegalNopImplied(); break;
+        case 0x1C: IllegalNopAbsoluteX(); break;
+        case 0x34: IllegalNopZeroPageX(); break;
+        case 0x3A: IllegalNopImplied(); break;
+        case 0x3C: IllegalNopAbsoluteX(); break;
+        case 0x44: IllegalNopZeroPage(); break;
+        case 0x54: IllegalNopZeroPageX(); break;
+        case 0x5A: IllegalNopImplied(); break;
+        case 0x5C: IllegalNopAbsoluteX(); break;
+        case 0x64: IllegalNopZeroPage(); break;
+        case 0x6B: IllegalArrImmediate(); break;
+        case 0x74: IllegalNopZeroPageX(); break;
+        case 0x7A: IllegalNopImplied(); break;
+        case 0x7C: IllegalNopAbsoluteX(); break;
+        case 0x80: IllegalNopAbsolute(); break;
+        case 0x82: IllegalNopImmediate(); break;
+        case 0x89: IllegalNopImmediate(); break;
+        case 0xC2: IllegalNopImmediate(); break;
+
+        case 0xD4: IllegalNopZeroPageX(); break;
+        case 0xDA: IllegalNopImplied(); break;
+        case 0xDC: IllegalNopAbsoluteX(); break;
+        case 0xE2: IllegalNopImmediate(); break;
+        case 0xeb: Read(&Cpu::Immediate, &Cpu::Sbc); break;
+        case 0xF4: IllegalNopZeroPageX(); break;
+        case 0xFA: IllegalNopImplied(); break;
+        case 0xFC: IllegalNopAbsoluteX(); break;
+
         //Jmp
-        case 0x4c: JmpAbsolute(); break;
-        case 0x6c: JmpIndirect(); break;
+        case 0x4C: JmpAbsolute(); break;
+        case 0x6C: JmpIndirect(); break;
 
         //Jsr
         case 0x20: Jsr(); break;
@@ -295,7 +337,7 @@ void Cpu::Asl() {
 }
 
 void Cpu::AslAccumulator(){
-    _readPc();
+    //_readPc();
     p.c = a & 0x80;
     a <<= 1;
     p.n = (a & 0x80);
@@ -309,11 +351,13 @@ void Cpu::Bit(){
 }
 
 void Cpu::Branch(bool condition){
+    if (!condition) _testInterrupt();
     _val = _readPcAndInc();
     if (condition) {
         uint16_t val16 = pc + (uint8_t)_val;
         _mem->PageIfRequired(pc, val16);
-        _readPc();
+        _testInterrupt();
+        //_readPc();
         pc = val16;
     }
 }
@@ -358,14 +402,14 @@ void Cpu::Dec(){
 }
 
 void Cpu::Dex(){
-    _readPc();
+    //_readPc();
     x--;
     p.n = (x & 0x80);
     p.z = (x == 0);
 };
 
 void Cpu::Dey(){
-    _readPc();
+    //_readPc();
     y--;
     p.n = (y & 0x80);
     p.z = (y == 0);
@@ -378,12 +422,12 @@ void Cpu::Eor(){
 }
 
 void Cpu::FlagClear(bool &flag){
-    _readPc();
+    //_readPc();
     flag = false;
 }
 
 void Cpu::FlagSet(bool &flag){
-    _readPc();
+    //_readPc();
     flag = true;
 }
 
@@ -394,14 +438,14 @@ void Cpu::Inc(){
 }
 
 void Cpu::Inx(){
-    _readPc();
+    //_readPc();
     x++;
     p.n = (x & 0x80);
     p.z = (x == 0);
 }
 
 void Cpu::Iny(){
-    _readPc();
+    //_readPc();
     y++;
     p.n = (y & 0x80);
     p.z = (y == 0);
@@ -425,7 +469,7 @@ void Cpu::JmpIndirect() {
 void Cpu::Jsr(){
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
-    _readPc();
+    //_readPc();
     pc--;
     _writeSp((uint8_t)(pc >> 8));
     _writeSp((uint8_t)(pc >> 0));
@@ -458,7 +502,7 @@ void Cpu::Lsr() {
 }
 
 void Cpu::LsrAccumulator() {
-    _readPc();
+    //_readPc();
     p.c = a & 0x01;
     a >>= 1;
     p.n = (a & 0x80);
@@ -466,7 +510,7 @@ void Cpu::LsrAccumulator() {
 }
 
 void Cpu::Nop(){
-    _readPc();
+    //_readPc();
 }
 
 void Cpu::Ora(){
@@ -476,26 +520,26 @@ void Cpu::Ora(){
 }
 
 void Cpu::Pha(){
-    _readPc();
+    //_readPc();
     _writeSp(a);
 }
 
 void Cpu::Php(){
-    _readPc();
+    //_readPc();
     _writeSp(p | 0x30);
 }
 
 void Cpu::Pla(){
-    _readPc();
-    _readPc();
+    //_readPc();
+    //_readPc();
     a = _readSp();
     p.n = (a & 0x80);
     p.z = (a == 0);
 }
 
 void Cpu::Plp(){
-    _readPc();
-    _readPc();
+    //_readPc();
+    //_readPc();
     p = _readSp();
 }
 
@@ -532,8 +576,8 @@ void Cpu::Ror() {
 }
 
 void Cpu::Rti() {
-    _readPc();
-    _readPc();
+    //_readPc();
+    //_readPc();
     p = _readSp();
     _addr16.l = _readSp();
     _addr16.h = _readSp();
@@ -541,11 +585,11 @@ void Cpu::Rti() {
 }
 
 void Cpu::Rts() {
-    _readPc();
-    _readPc();
+    //_readPc();
+    //_readPc();
     _addr16.l = _readSp();
     _addr16.h = _readSp();
-    _readPc();
+    //_readPc();
     pc = ++_addr16.w;
 }
 
@@ -572,43 +616,85 @@ void Cpu::Sty(){
 }
 
 void Cpu::Tax() {
-    _readPc();
+    //_readPc();
     x = a;
     p.n = (x & 0x80);
     p.z = (x == 0);
 }
 
 void Cpu::Txa() {
-    _readPc();
+    //_readPc();
     a = x;
     p.n = (a & 0x80);
     p.z = (a == 0);
 }
 
 void Cpu::Tay() {
-    _readPc();
+    //_readPc();
     y = a;
     p.n = (y & 0x80);
     p.z = (y == 0);
 }
 
 void Cpu::Tya() {
-    _readPc();
+    //_readPc();
     a = y;
     p.n = (a & 0x80);
     p.z = (a == 0);
 }
 
 void Cpu::Txs() {
-    _readPc();
+    //_readPc();
     s = x;
 }
 
 void Cpu::Tsx() {
-    _readPc();
+    //_readPc();
     x = s;
     p.n = (x & 0x80);
     p.z = (x == 0);
+}
+
+void Cpu::IllegalNopZeroPage(){
+    _val = _readPcAndInc();
+    _mem->ReadZP(_val);
+}
+
+void Cpu::IllegalNopAbsolute(){
+    _addr16.l = _readPcAndInc();
+    _addr16.h = _readPcAndInc();
+    //_readPc();
+}
+
+void Cpu::IllegalNopZeroPageX(){
+    _val = _readPcAndInc();
+    _mem->ReadZP(_val);
+    _mem->ReadZP(_val + x);
+}
+
+void Cpu::IllegalNopImplied(){
+    //_readPc();
+}
+
+void Cpu::IllegalNopAbsoluteX(){
+    _addr16.l = _readPcAndInc();
+    _addr16.h = _readPcAndInc();
+    _mem->PageIfRequired(_addr16.w, _addr16.w + x);
+    //_readPc();
+}
+
+void Cpu::IllegalArrImmediate() {
+    _val = _readPcAndInc();
+    a &= _val;
+    a = (p.c << 7) | (a >> 1);
+    p.n = (a & 0x80);
+    p.z = (a == 0);
+    p.c = (a & 0x40);
+    p.v = p.c ^ ((a >> 5) & 1);
+}
+
+void Cpu::IllegalNopImmediate() {
+    //_readPc();
 }
 
 void Cpu::Immediate(void (Cpu::*opcode)(), bool rmw, bool write) {
@@ -707,4 +793,42 @@ void Cpu::_writeSp(uint8_t data){
 
 uint8_t Cpu::_readSp(){
     return _mem->Read(0x0100 | ++s);
+}
+
+void Cpu::_testInterrupt(){
+    _interrupt_pending = ((_irq | _apu) & ~p.i) | _nmi_pending;
+}
+
+bool Cpu::Interrupt(){
+    //_readPc();
+    //_readPc();
+    if (!_interrupt_pending) return false;
+    _writeSp(pc >> 8);
+    _writeSp(pc >> 0);
+    _writeSp(p | 0x20);
+    uint16_t vector = 0xfffe;  //IRQ
+    if(_nmi) {
+        _nmi = false;
+        vector = 0xfffa;
+    }
+    _addr16.l = _mem->Read(vector++);
+    p.i = 1;
+    p.d = 0;
+    _testInterrupt();
+    _addr16.h = _mem->Read(vector++);
+    pc = _addr16.w;
+    return true;
+}
+
+void Cpu::Apu(bool line) {
+    _apu = line;
+}
+
+void Cpu::Irq(bool line) {
+    _irq = line;
+}
+
+void Cpu::Nmi(bool line) {
+    if(!_nmi && line) _nmi_pending = true;
+    _nmi = line;
 }

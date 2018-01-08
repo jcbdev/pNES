@@ -955,3 +955,100 @@ TEST_F(CpuTest, TsxNegative) {
     EXPECT_EQ(cpu->x, 0xFF);
     EXPECT_nvdizc(cpu, true, false, false, true, false, false);
 }
+
+TEST_F(CpuTest, IllegalNopZP) {
+    ExecuteZeroPage(cpu, mem, 0x04, 0x00, nullptr, 0x00, 0x50);
+    EXPECT_ZeroPage(mem, 0x00);
+    ExecuteZeroPage(cpu, mem, 0x44, 0x00, nullptr, 0x00, 0x50);
+    EXPECT_ZeroPage(mem, 0x00);
+    ExecuteZeroPage(cpu, mem, 0x64, 0x00, nullptr, 0x00, 0x50);
+    EXPECT_ZeroPage(mem, 0x00);
+}
+
+TEST_F(CpuTest, IllegalNopAbsolute) {
+    ExecuteAbsolute(cpu, mem, 0x0C, 0xAB, nullptr);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAbsolute(cpu, mem, 0x80, 0xAB, nullptr);
+    EXPECT_EQ(cpu->a, 0x00);
+}
+
+TEST_F(CpuTest, IllegalNopZPX) {
+    ExecuteZeroPageX(cpu, mem, 0x14, 0x00, nullptr, 0x00, 0x00, 0x50);
+    EXPECT_ZeroPageX(mem, 0x00);
+    ExecuteZeroPageX(cpu, mem, 0x34, 0x00, nullptr, 0x00, 0x00, 0x50);
+    EXPECT_ZeroPageX(mem, 0x00);
+    ExecuteZeroPageX(cpu, mem, 0x54, 0x00, nullptr, 0x00, 0x00, 0x50);
+    EXPECT_ZeroPageX(mem, 0x00);
+    ExecuteZeroPageX(cpu, mem, 0x74, 0x00, nullptr, 0x00, 0x00, 0x50);
+    EXPECT_ZeroPageX(mem, 0x00);
+    ExecuteZeroPageX(cpu, mem, 0xD4, 0x00, nullptr, 0x00, 0x00, 0x50);
+    EXPECT_ZeroPageX(mem, 0x00);
+    ExecuteZeroPageX(cpu, mem, 0xF4, 0x00, nullptr, 0x00, 0x00, 0x50);
+    EXPECT_ZeroPageX(mem, 0x00);
+}
+
+TEST_F(CpuTest, IllegalNopImplied) {
+    ExecuteAccumulator(cpu, mem, 0x1A, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAccumulator(cpu, mem, 0x3A, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAccumulator(cpu, mem, 0x5A, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAccumulator(cpu, mem, 0x7A, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAccumulator(cpu, mem, 0xDA, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAccumulator(cpu, mem, 0xFA, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+}
+
+TEST_F(CpuTest, IllegalNopAbsoluteX) {
+    ExecuteAbsoluteX(cpu, mem, 0x1C, 0xAB, nullptr, 0x00, 0x01);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAbsoluteX(cpu, mem, 0x3C, 0xAB, nullptr, 0x00, 0x01);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAbsoluteX(cpu, mem, 0x5C, 0xAB, nullptr, 0x00, 0x01);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAbsoluteX(cpu, mem, 0x7C, 0xAB, nullptr, 0x00, 0x01);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAbsoluteX(cpu, mem, 0xDC, 0xAB, nullptr, 0x00, 0x01);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAbsoluteX(cpu, mem, 0xFC, 0xAB, nullptr, 0x00, 0x01);
+    EXPECT_EQ(cpu->a, 0x00);
+}
+
+TEST_F(CpuTest, IllegalArrImmediate) {
+    ExecuteImmediate(cpu, mem, 0x6B, 0x02, nullptr, 0x02);
+    EXPECT_EQ(cpu->a, 0x01);
+    EXPECT_nvdizc(cpu, false, false, false, true, false, false);
+}
+
+TEST_F(CpuTest, IllegalArrImmediateZero) {
+    ExecuteImmediate(cpu, mem, 0x6B, 0x01, nullptr, 0x01);
+    EXPECT_EQ(cpu->a, 0x00);
+    EXPECT_nvdizc(cpu, false, false, false, true, true, false);
+}
+
+TEST_F(CpuTest, IllegalArrImmediateNegative) {
+    CpuFlags p = nvdizc(false, false, false, true, false, true);
+    ExecuteImmediate(cpu, mem, 0x6B, 0xFF, &p, 0xFF);
+    EXPECT_EQ(cpu->a, 0xFF);
+    EXPECT_nvdizc(cpu, true, false, false, true, false, true);
+}
+
+TEST_F(CpuTest, IllegalNopImmediate) {
+    ExecuteAccumulator(cpu, mem, 0x82, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAccumulator(cpu, mem, 0x89, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAccumulator(cpu, mem, 0xC2, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+    ExecuteAccumulator(cpu, mem, 0xE2, nullptr, 0x00);
+    EXPECT_EQ(cpu->a, 0x00);
+}
+
+TEST_F(CpuTest, IllegalSbc){
+    ExecuteImmediate(cpu, mem, 0xEB, 0x01, nullptr, 0x1F);
+    EXPECT_EQ(cpu->a, 0x1D);
+    EXPECT_nvdizc(cpu, false, false, false, true, false, true);
+}

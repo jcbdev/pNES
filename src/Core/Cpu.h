@@ -24,9 +24,14 @@ public:
     uint8_t a;
     uint16_t pc;
     CpuFlags p;
+    uint32_t ticks;
 
     virtual void Reset() = 0;
     virtual void Cycle() = 0;
+    virtual bool Interrupt() = 0;
+    virtual void Apu(bool line) = 0;
+    virtual void Irq(bool line) = 0;
+    virtual void Nmi(bool line) = 0;
 
     bool error;
 
@@ -41,6 +46,10 @@ public:
 
     virtual void Reset();
     virtual void Cycle();
+    virtual bool Interrupt();
+    virtual void Apu(bool line);
+    virtual void Irq(bool line);
+    virtual void Nmi(bool line);
 
     void Read(void (Cpu::*operation)(void (Cpu::*opcode)(), bool, bool), void (Cpu::*opcode)());
     void Store(void (Cpu::*operation)(void (Cpu::*opcode)(), bool, bool), void (Cpu::*opcode)());
@@ -96,6 +105,15 @@ public:
     void Txs();
     void Tsx();
 
+    //Illegals
+    void IllegalNopZeroPage();
+    void IllegalNopAbsolute();
+    void IllegalNopZeroPageX();
+    void IllegalNopImplied();
+    void IllegalNopAbsoluteX();
+    void IllegalArrImmediate();
+    void IllegalNopImmediate();
+
 
     void Immediate(void (Cpu::*opcode)(), bool rmw, bool write);
     void Zeropage(void (Cpu::*opcode)(), bool rmw, bool write);
@@ -114,6 +132,12 @@ private:
     uint8_t _readPc();
     void _writeSp(uint8_t data);
     uint8_t _readSp();
+    void _testInterrupt();
+    bool _interrupt_pending;
+    bool _nmi;
+    bool _nmi_pending;
+    bool _apu;
+    bool _irq;
 };
 
 
