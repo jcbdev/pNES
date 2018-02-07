@@ -24,7 +24,7 @@ public:
 
     void Reset();
 
-    MemoryStub();
+    MemoryStub(ISystem* system);
 };
 
 

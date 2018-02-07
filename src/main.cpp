@@ -5,6 +5,7 @@
 #include "Core/Memory.h"
 #include "Core/Cpu.h"
 #include "Rom/Nrom.h"
+#include "Core/Ppu.h"
 
 static SDL_Window *window = NULL;
 static SDL_GLContext gl_context;
@@ -31,12 +32,17 @@ int SDLCALL watch(void *userdata, SDL_Event* event) {
 int main() {
     std::cout << "pNES!" << std::endl;
 
+    ISystem *system = new System();
+
     //Load Rom
     ILogger *logger = new ConsoleLogger();
-    Cart *cart = new Nrom(logger);
-    cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
-    CpuMemory *memory = new CpuMemory(cart);
-    Cpu *cpu = new Cpu(memory, logger);
+    Cart *cart = new Nrom(system);
+    CpuMemory *memory = new CpuMemory(system);
+    Cpu *cpu = new Cpu(system);
+    Ppu *ppu = new Ppu(system);
+
+    system->Configure(cpu, memory, cart, ppu, logger);
+    cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
 
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) != 0) {
         SDL_Log("Failed to initialize SDL: %s", SDL_GetError());

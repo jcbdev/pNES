@@ -4,7 +4,7 @@
 
 #include "Nrom.h"
 
-Nrom::Nrom(ILogger *logger) : Cart(logger) {
+Nrom::Nrom(ISystem *system) : Cart(system) {
 
 }
 
@@ -22,19 +22,19 @@ uint8_t Nrom::PrgRead(uint16_t addr) {
 
 void Nrom::PrgWrite(uint16_t addr, uint8_t data) {}
 
-uint8_t Nrom::ChrRead(IPpu *ppu, uint16_t addr) {
+uint8_t Nrom::ChrRead(uint16_t addr) {
     if(addr & 0x2000) {
         if(Header.Mirroring() == 0) addr = ((addr & 0x0800) >> 1) | (addr & 0x03ff);
-        return ppu->CiramRead(addr & 0x07ff);
+        //return ppu->CiramRead(addr & 0x07ff);
     }
     if(Header.ChrRamSize) return romData[16 + (Header.PrgRomSize * 0x4000) + addr];
     return romData[16 + (Header.PrgRomSize * 0x4000) + addr];
 }
 
-void Nrom::ChrWrite(IPpu *ppu, uint16_t addr, uint8_t data) {
+void Nrom::ChrWrite(uint16_t addr, uint8_t data) {
     if(addr & 0x2000) {
         if(Header.Mirroring() == 0) addr = ((addr & 0x0800) >> 1) | (addr & 0x03ff);
-        return ppu->CiramWrite(addr & 0x07ff, data);
+        //return ppu->CiramWrite(addr & 0x07ff, data);
     }
     if(Header.ChrRamSize) romData[16 + (Header.PrgRomSize * 0x4000) + addr] = data;
 }

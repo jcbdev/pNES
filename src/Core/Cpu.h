@@ -7,16 +7,16 @@
 
 
 #include <memory>
-#include "Memory.h"
-#include "Core.h"
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include "System.h"
+#include "Core.h"
 
 class ICpu {
 public:
-    ICpu(IMemory* memory, ILogger* logger);
+    explicit ICpu(ISystem* system);
 
     uint8_t x;
     uint8_t y;
@@ -36,20 +36,19 @@ public:
     bool error;
 
 protected:
-    IMemory* _mem;
-    ILogger* _logger;
+    ISystem* _system;
 };
 
 class Cpu : public ICpu {
 public:
-    Cpu(IMemory*  memory, ILogger* logger);
+    explicit Cpu(ISystem* system);
 
-    virtual void Reset();
-    virtual void Cycle();
-    virtual bool Interrupt();
-    virtual void Apu(bool line);
-    virtual void Irq(bool line);
-    virtual void Nmi(bool line);
+    void Reset() override;
+    void Cycle() override;
+    bool Interrupt() override;
+    void Apu(bool line) override;
+    void Irq(bool line) override;
+    void Nmi(bool line) override;
 
     void Read(void (Cpu::*operation)(void (Cpu::*opcode)(), bool, bool), void (Cpu::*opcode)());
     void Store(void (Cpu::*operation)(void (Cpu::*opcode)(), bool, bool), void (Cpu::*opcode)());

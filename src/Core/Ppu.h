@@ -5,11 +5,12 @@
 #ifndef LITTLEPNES_PPU_H
 #define LITTLEPNES_PPU_H
 
-#include "Cpu.h"
+#include <cstdint>
+#include "System.h"
 
 class IPpu {
 public:
-    IPpu(ICpu* cpu);
+    explicit IPpu(ISystem* system);
 
     virtual uint8_t CiramRead(uint16_t addr) = 0;
     virtual void CiramWrite(uint16_t addr, uint8_t data) = 0;
@@ -18,17 +19,17 @@ public:
     virtual void Write(uint16_t addr, uint8_t data) = 0;
 
 protected:
-    ICpu* _cpu;
+    ISystem* _system;
 };
 
 class Ppu : public IPpu {
 public:
-    Ppu(ICpu *cpu);
-    uint8_t CiramRead(uint16_t addr);
-    void CiramWrite(uint16_t addr, uint8_t data);
+    explicit Ppu(ISystem *system);
+    uint8_t CiramRead(uint16_t addr) override;
+    void CiramWrite(uint16_t addr, uint8_t data) override;
 
-    uint8_t Read(uint16_t addr);
-    void Write(uint16_t addr, uint8_t data);
+    uint8_t Read(uint16_t addr) override;
+    void Write(uint16_t addr, uint8_t data) override;
 
 private:
     uint16_t _screenbuffer[256 * 262];

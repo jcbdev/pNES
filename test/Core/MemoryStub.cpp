@@ -4,7 +4,7 @@
 
 #include "MemoryStub.h"
 
-MemoryStub::MemoryStub() {
+MemoryStub::MemoryStub(ISystem* system) : IMemory::IMemory(system) {
     Write(0x4017, 0x00);
     Write(0x4015, 0x00);
     WriteRange(0x4000, 0x400F, 0x00);

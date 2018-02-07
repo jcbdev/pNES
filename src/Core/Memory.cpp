@@ -3,13 +3,14 @@
 //
 
 #include "Memory.h"
+#include "../Rom/Cart.h"
 
-CpuMemory::CpuMemory(Cart *cart) {
-    _cart = cart;
-    Write(0x4017, 0x00);
-    Write(0x4015, 0x00);
-    WriteRange(0x4000, 0x400F, 0x00);
-    WriteRange(0x0000, 0x07FF, 0X00);
+IMemory::IMemory(ISystem *system) {
+    _system = system;
+}
+
+CpuMemory::CpuMemory(ISystem *system) : IMemory::IMemory(system) {
+
 }
 
 void CpuMemory::Reset() {
@@ -24,7 +25,7 @@ uint8_t CpuMemory::Read(uint16_t addr) {
     if (addr < 0x4000) return _ppuregs[(uint16_t)((addr-0x2000) % 0x08)];
     if (addr < 0x4018) return _nesapu[(uint16_t)(addr-0x4000)];
     if (addr < 0x4020) return _apu[(uint16_t)(addr-0x4018)];
-    return _cart->PrgRead(addr);
+    return _system->cart->PrgRead(addr);
 }
 
 uint8_t CpuMemory::ReadZP(uint8_t addr) {
@@ -32,7 +33,7 @@ uint8_t CpuMemory::ReadZP(uint8_t addr) {
     if (addr < 0x4000) return _ppuregs[(uint16_t)((addr-0x2000) % 0x08)];
     if (addr < 0x4018) return _nesapu[(uint16_t)(addr-0x4000)];
     if (addr < 0x4020) return _apu[(uint16_t)(addr-0x4018)];
-    return _cart->PrgRead(addr);
+    return _system->cart->PrgRead(addr);
 }
 
 void CpuMemory::Write(uint16_t addr, uint8_t value) {
@@ -40,7 +41,7 @@ void CpuMemory::Write(uint16_t addr, uint8_t value) {
     if (addr < 0x4000) _ppuregs[(uint16_t)((addr-0x2000) % 0x08)] = value;
     if (addr < 0x4018) _nesapu[(uint16_t)(addr-0x4000)] = value;
     if (addr < 0x4020) _apu[(uint16_t)(addr-0x4018)] = value;
-    _cart->PrgWrite(addr, value);
+    _system->cart->PrgWrite(addr, value);
 }
 
 void CpuMemory::WriteZP(uint8_t addr, uint8_t value) {
@@ -48,7 +49,7 @@ void CpuMemory::WriteZP(uint8_t addr, uint8_t value) {
     if (addr < 0x4000) _ppuregs[(uint16_t)((addr-0x2000) % 0x08)] = value;
     if (addr < 0x4018) _nesapu[(uint16_t)(addr-0x4000)] = value;
     if (addr < 0x4020) _apu[(uint16_t)(addr-0x4018)] = value;
-    _cart->PrgWrite(addr, value);
+    _system->cart->PrgWrite(addr, value);
 }
 
 void CpuMemory::WriteRange(uint16_t start, uint16_t end, uint8_t value) {

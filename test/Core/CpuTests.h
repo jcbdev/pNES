@@ -372,18 +372,21 @@ namespace {
     class CpuTest : public ::testing::Test {
     protected:
         virtual void SetUp() {
-            mem = new MemoryStub();
+            system = new System();
+            mem = new MemoryStub(system);
             logger = new LoggerStub();
 
-            cpu = new Cpu(mem, logger);
+            cpu = new Cpu(system);
             //emulate jmp from reset
             mem->Write(0xFFFC, 0x00);
             mem->Write(0xFFFD, 0x80);
         }
 
+        ISystem* system;
         IMemory* mem;
         ILogger* logger;
         ICpu *cpu;
+        IPpu *ppu;
     };
 }
 

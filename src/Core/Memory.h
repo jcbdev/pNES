@@ -7,7 +7,7 @@
 
 
 #include <cstdint>
-#include "../Rom/Cart.h"
+#include "System.h"
 
 class IMemory {
 public:
@@ -20,7 +20,10 @@ public:
     virtual void ForcedPage(uint16_t addr1, uint16_t addr2) = 0;
 
     virtual void Reset() = 0;
-    IMemory() {};
+    IMemory(ISystem* system);
+
+protected:
+    ISystem* _system;
 };
 
 class CpuMemory : public IMemory {
@@ -30,7 +33,6 @@ private:
     uint8_t _ppuregs[0x08];
     uint8_t _nesapu[0x18];
     uint8_t _apu[0x08];
-    Cart* _cart;
 
 
     //TODO: rest of hardware address bus
@@ -46,7 +48,7 @@ public:
 
     void Reset();
 
-    CpuMemory(Cart *cart);
+    CpuMemory(ISystem *system);
 };
 
 
