@@ -10,6 +10,7 @@
 #include "../Helpers/Logger.h"
 #include "RomHeader.h"
 #include "RomTypes.h"
+#include "../Core/Ppu.h"
 
 class Cart {
 protected:
@@ -37,8 +38,8 @@ public:
 
     virtual uint8_t PrgRead(uint16_t addr);
     virtual void PrgWrite(uint16_t addr, uint8_t data);
-    virtual uint8_t ChrRead(uint16_t addr);
-    virtual void ChrWrite(uint16_t addr, uint8_t data);
+    virtual uint8_t ChrRead(IPpu *ppu, uint16_t addr);
+    virtual void ChrWrite(IPpu *ppu, uint16_t addr, uint8_t data);
 };
 
 

@@ -23,9 +23,9 @@ ICpu::ICpu(IMemory* memory, ILogger* logger) {
 }
 
 Cpu::Cpu(IMemory* memory, ILogger* logger) : ICpu::ICpu(memory, logger) {
-    _interrupt_pending = false;
+    _interruptPending = false;
     _nmi = false;
-    _nmi_pending = false;
+    _nmiPending = false;
     _irq = false;
     _apu = false;
 }
@@ -51,7 +51,7 @@ void Cpu::Reset() {
 //    pc = 0x8000;
 
     _nmi = false;
-    _nmi_pending = false;
+    _nmiPending = false;
     _irq = false;
     _apu = false;
 
@@ -796,13 +796,13 @@ uint8_t Cpu::_readSp(){
 }
 
 void Cpu::_testInterrupt(){
-    _interrupt_pending = ((_irq | _apu) & ~p.i) | _nmi_pending;
+    _interruptPending = ((_irq | _apu) & ~p.i) | _nmiPending;
 }
 
 bool Cpu::Interrupt(){
     //_readPc();
     //_readPc();
-    if (!_interrupt_pending) return false;
+    if (!_interruptPending) return false;
     _writeSp(pc >> 8);
     _writeSp(pc >> 0);
     _writeSp(p | 0x20);
@@ -829,6 +829,6 @@ void Cpu::Irq(bool line) {
 }
 
 void Cpu::Nmi(bool line) {
-    if(!_nmi && line) _nmi_pending = true;
+    if(!_nmi && line) _nmiPending = true;
     _nmi = line;
 }

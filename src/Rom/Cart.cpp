@@ -132,8 +132,8 @@ uint8_t Cart::PrgRead(uint16_t addr) {
 
 void Cart::PrgWrite(uint16_t addr, uint8_t data) {}
 
-uint8_t Cart::ChrRead(uint16_t addr) {
+uint8_t Cart::ChrRead(IPpu *ppu, uint16_t addr) {
     return 0;
 }
 
-void Cart::ChrWrite(uint16_t addr, uint8_t data) {}
+void Cart::ChrWrite(IPpu *ppu, uint16_t addr, uint8_t data) {}

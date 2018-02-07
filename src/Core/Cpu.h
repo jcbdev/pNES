@@ -133,9 +133,9 @@ private:
     void _writeSp(uint8_t data);
     uint8_t _readSp();
     void _testInterrupt();
-    bool _interrupt_pending;
+    bool _interruptPending;
     bool _nmi;
-    bool _nmi_pending;
+    bool _nmiPending;
     bool _apu;
     bool _irq;
 };

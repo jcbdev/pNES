@@ -30,4 +30,5 @@ struct CpuFlags {
     }
 };
 
+
 #endif //LITTLEPNES_CORE_H
