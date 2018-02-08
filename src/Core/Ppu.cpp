@@ -20,27 +20,23 @@ void Ppu::CiramWrite(uint16_t addr, uint8_t data){
     _ciram[addr & 0x07ff] = data;
 }
 
-uint8_t Ppu::Read(uint16_t addr) {
-    return 0;
-}
-
 void Ppu::Write(uint16_t addr, uint8_t data) {
 
 }
 
-uint8_t Read(uint16_t addr){
+uint8_t Ppu::Read(uint16_t addr){
     uint8_t result = 0x00;
 
-//    switch(addr & 7) {
-//        case 2:  //PPUSTATUS
-//            result |= _nmi << 7;
-//            result |= _spriteZeroHit << 6;
-//            result |= _sprite_overflow << 5;
-//            result |= status.mdr & 0x1f;
-//            _nmi = 0;
-//            cpu.set_nmi_line(0);
-//            status.address_latch = 0;
-//            break;
+    switch(addr & 7) {
+        case 2:  //PPUSTATUS
+            result |= _nmiEnable << 7;
+            result |= _spriteZeroHit << 6;
+            result |= _spriteOverflow << 5;
+            result |= status.mdr & 0x1f;
+            _nmi = 0;
+            cpu.set_nmi_line(0);
+            status.address_latch = 0;
+            break;
 //        case 4:  //OAMDATA
 //            result = oam[status.oam_addr];
 //            if((status.oam_addr & 3) == 3) result &= 0xe3;
@@ -61,7 +57,7 @@ uint8_t Read(uint16_t addr){
 //            }
 //            status.vaddr += status.vram_increment;
 //            break;
-//    }
+    }
 
     return result;
 }
