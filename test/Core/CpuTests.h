@@ -10,6 +10,8 @@
 #include "MemoryStub.h"
 #include "LoggerStub.h"
 #include "../../src/Core/Cpu.h"
+#include "../../src/Core/Ppu.h"
+#include "../../src/Rom/Cart.h"
 
 CpuFlags nvdizc(bool n = false, bool v = false, bool d = false, bool i = true, bool z = false, bool c = false) {
     CpuFlags flags;
@@ -375,8 +377,11 @@ namespace {
             system = new System();
             mem = new MemoryStub(system);
             logger = new LoggerStub();
-
             cpu = new Cpu(system);
+            ppu = new Ppu(system);
+            cart = new Cart(system);
+
+            system->Configure(cpu, mem, cart, ppu, logger);
             //emulate jmp from reset
             mem->Write(0xFFFC, 0x00);
             mem->Write(0xFFFD, 0x80);
@@ -387,6 +392,7 @@ namespace {
         ILogger* logger;
         ICpu *cpu;
         IPpu *ppu;
+        Cart *cart;
     };
 }
 

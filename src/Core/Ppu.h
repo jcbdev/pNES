@@ -14,6 +14,8 @@ public:
 
     virtual uint8_t CiramRead(uint16_t addr) = 0;
     virtual void CiramWrite(uint16_t addr, uint8_t data) = 0;
+    virtual uint8_t CgramRead(uint16_t addr) = 0;
+    virtual void CgramWrite(uint16_t addr, uint8_t data) = 0;
 
     virtual uint8_t Read(uint16_t addr) = 0;
     virtual void Write(uint16_t addr, uint8_t data) = 0;
@@ -27,15 +29,30 @@ public:
     explicit Ppu(ISystem *system);
     uint8_t CiramRead(uint16_t addr) override;
     void CiramWrite(uint16_t addr, uint8_t data) override;
+    uint8_t CgramRead(uint16_t addr) override;
+    void CgramWrite(uint16_t addr, uint8_t data) override;
 
     uint8_t Read(uint16_t addr) override;
     void Write(uint16_t addr, uint8_t data) override;
 
 private:
+    bool _rasterEnable();
+
     uint16_t _screenbuffer[256 * 262];
     uint8_t _ciram[2048];
     uint8_t _cgram[32];
     uint8_t _oam[256];
+
+    bool field;
+    uint8_t _x;
+    uint8_t _y;
+
+    uint8_t _mbr;
+    uint8_t _data;
+    bool _latch;
+
+    uint8_t _vaddr;
+
 
     //$2000 - PPUCTRL
     bool _nmiEnable;
@@ -48,6 +65,7 @@ private:
 
     //$2001 - PPUMASK
     uint8_t _bgrEmphasis;
+
     bool _spriteEnable;
     bool _bgEnable;
     bool _spriteLColEnable;
