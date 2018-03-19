@@ -5,6 +5,7 @@
 #include "System.h"
 #include "Memory.h"
 #include "Cpu.h"
+#include "Ppu.h"
 
 void System::Configure(ICpu *cpu, IMemory *mem, Cart *cart, IPpu *ppu, ILogger *logger) {
     this->cpu = cpu;
@@ -20,6 +21,7 @@ System::System() : ISystem::ISystem() {
 void System::Reset() {
     mem->Reset();
     cpu->Reset();
+    ppu->Reset();
 }
 
 ISystem::ISystem() = default;

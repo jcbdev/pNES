@@ -5,8 +5,6 @@
 #ifndef LITTLEPNES_CORE_H
 #define LITTLEPNES_CORE_H
 
-#include <cstdint>
-
 struct Address16 {
     union {
         uint16_t w;

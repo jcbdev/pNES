@@ -24,10 +24,11 @@ public:
     uint8_t a;
     uint16_t pc;
     CpuFlags p;
-    uint32_t ticks;
+    uint32_t clocks;
 
     virtual void Reset() = 0;
     virtual void Cycle() = 0;
+    virtual void PrintCycle() = 0;
     virtual bool Interrupt() = 0;
     virtual void Apu(bool line) = 0;
     virtual void Irq(bool line) = 0;
@@ -44,6 +45,7 @@ public:
     explicit Cpu(ISystem* system);
 
     void Reset() override;
+    void PrintCycle() override;
     void Cycle() override;
     bool Interrupt() override;
     void Apu(bool line) override;
@@ -128,9 +130,11 @@ private:
     uint8_t _val;
     Address16 _addr16;
     uint8_t _readPcAndInc();
-    uint8_t _readPc();
+    void _addClocks();
+    uint8_t _read(uint16_t addr);
     void _writeSp(uint8_t data);
     uint8_t _readSp();
+    void _write(uint16_t addr, uint8_t data);
     void _testInterrupt();
     bool _interruptPending;
     bool _nmi;

@@ -8,15 +8,34 @@
 #include "Core/Ppu.h"
 
 static SDL_Window *window = NULL;
-static SDL_GLContext gl_context;
+//static SDL_GLContext gl_context;
+static SDL_Renderer *renderer = NULL;
 static bool quitting = false;
 
-void render() {
+void render(uint16_t* screenBuffer) {
 
-    SDL_GL_MakeCurrent(window, gl_context);
+    //SDL_GL_MakeCurrent(window, gl_context);
 
-    SDL_GL_SwapWindow(window);
+    //SDL_GL_SwapWindow(window);
 
+    SDL_Texture* buffer = SDL_CreateTexture(renderer,
+                                            SDL_PIXELFORMAT_RGB555,
+                                            SDL_TEXTUREACCESS_STREAMING,
+                                            256,
+                                            262);
+
+    int pitch = 256;
+    void *buf = malloc(256*262*2);
+    SDL_LockTexture(buffer,
+                    NULL,      // NULL means the *whole texture* here.
+                    &buf,
+                    &pitch);
+
+    memcpy(buf, screenBuffer, 256*262*2);
+
+    SDL_UnlockTexture(buffer);
+
+    SDL_RenderCopy(renderer, buffer, NULL, NULL);
 } //render
 
 
@@ -51,7 +70,9 @@ int main() {
 
     window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 256, 240, SDL_WINDOW_OPENGL);
 
-    gl_context = SDL_GL_CreateContext(window);
+    //gl_context = SDL_GL_CreateContext(window);
+
+    renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
 
     SDL_AddEventWatch(watch, NULL);
 
@@ -67,13 +88,17 @@ int main() {
 
         if (cpu->Interrupt()) continue;
         cpu->Cycle();
-        render();
+        ppu->RasterScanline();
+        ppu->RasterScanline();
+        ppu->RasterScanline();
+        render(ppu->ScreenBuffer());
         SDL_Delay(2);
 
     }
 
     SDL_DelEventWatch(watch, NULL);
-    SDL_GL_DeleteContext(gl_context);
+    SDL_DestroyRenderer(renderer);
+    //SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();
 
