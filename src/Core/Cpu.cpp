@@ -23,7 +23,7 @@ uint8_t Cpu::_readPcAndInc() {
 }
 
 void Cpu::_addClocks() {
-    clocks += 12;
+    clocks += 3;
 }
 
 uint8_t Cpu::_read(uint16_t addr) {
@@ -38,6 +38,16 @@ void Cpu::_write(uint16_t addr, uint8_t data) {
 
 void Cpu::_writeSp(uint8_t data){
     _write(0x0100 | s--, data);
+}
+
+uint8_t Cpu::_readZp(uint8_t zp){
+    _addClocks();
+    return _system->mem->ReadZP(zp);
+};
+
+void Cpu::_writeZp(uint8_t zp, uint8_t data) {
+    _addClocks();
+    _system->mem->WriteZP(zp, data);
 }
 
 uint8_t Cpu::_readSp(){
@@ -62,7 +72,7 @@ void Cpu::Reset() {
     _apu = false;
 
     error = false;
-    clocks = 0;
+    clocks = 1;
 }
 
 void Cpu::PrintCycle() {
@@ -269,6 +279,8 @@ void Cpu::PrintCycle() {
             "A:" << hex2 << (int)a << " X:" << hex2 << (int)x << " Y:" << hex2 << (int)y << " S:" << hex2 << (int)s << " "
             << (p.n ? "N" : "n") << (p.v ? "V" : "v") << (p.d ? "D" : "d") <<
             (p.i ? "I" : "i") << (p.z ? "Z" : "z") << (p.c ? "C" : "c");
+
+    output << "\tclocks:" << (int)(clocks);
 
 #undef hex4
 #undef hex2
@@ -586,10 +598,10 @@ void Cpu::Brk(){
     _writeSp(pc >> 8);
     _writeSp(pc >> 0);
     _writeSp(p | 0x30);
-    _addr16.l = _system->mem->Read(0xfffe);
+    _addr16.l = _read(0xfffe);
     p.i = 1;
     p.d = 0;
-    _addr16.h = _system->mem->Read(0xffff);
+    _addr16.h = _read(0xffff);
     pc = _addr16.w;
 }
 
@@ -615,6 +627,7 @@ void Cpu::Cpy(){
 }
 
 void Cpu::Dec(){
+    _testInterrupt();
     _val--;
     p.n = (_val & 0x80);
     p.z = (_val == 0);
@@ -641,16 +654,19 @@ void Cpu::Eor(){
 }
 
 void Cpu::FlagClear(bool &flag){
+    _testInterrupt();
     _addClocks();
     flag = false;
 }
 
 void Cpu::FlagSet(bool &flag){
+    _testInterrupt();
     _addClocks();
     flag = true;
 }
 
 void Cpu::Inc(){
+    _testInterrupt();
     _val++;
     p.n = (_val & 0x80);
     p.z = (_val == 0);
@@ -672,6 +688,7 @@ void Cpu::Iny(){
 
 void Cpu::JmpAbsolute(){
     _addr16.l = _readPcAndInc();
+    _testInterrupt();
     _addr16.h = _readPcAndInc();
     pc = _addr16.w;
 }
@@ -680,8 +697,9 @@ void Cpu::JmpIndirect() {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
     Address16 indirectAddr;
-    indirectAddr.l = _system->mem->Read(_addr16.w); _addr16.l++;
-    indirectAddr.h = _system->mem->Read(_addr16.w); _addr16.l++;
+    indirectAddr.l = _read(_addr16.w); _addr16.l++;
+    _testInterrupt();
+    indirectAddr.h = _read(_addr16.w); _addr16.l++;
     pc = indirectAddr.w;
 }
 
@@ -691,6 +709,7 @@ void Cpu::Jsr(){
     _addClocks();
     pc--;
     _writeSp((uint8_t)(pc >> 8));
+    _testInterrupt();
     _writeSp((uint8_t)(pc >> 0));
     pc = _addr16.w;
 }
@@ -740,17 +759,20 @@ void Cpu::Ora(){
 
 void Cpu::Pha(){
     _addClocks();
+    _testInterrupt();
     _writeSp(a);
 }
 
 void Cpu::Php(){
     _addClocks();
+    _testInterrupt();
     _writeSp(p | 0x30);
 }
 
 void Cpu::Pla(){
     _addClocks();
     _addClocks();
+    _testInterrupt();
     a = _readSp();
     p.n = (a & 0x80);
     p.z = (a == 0);
@@ -759,6 +781,7 @@ void Cpu::Pla(){
 void Cpu::Plp(){
     _addClocks();
     _addClocks();
+    _testInterrupt();
     p = _readSp();
 }
 
@@ -876,7 +899,7 @@ void Cpu::Tsx() {
 
 void Cpu::IllegalNopZeroPage(){
     _val = _readPcAndInc();
-    _system->mem->ReadZP(_val);
+    _readZp(_val);
 }
 
 void Cpu::IllegalNopAbsolute(){
@@ -887,8 +910,8 @@ void Cpu::IllegalNopAbsolute(){
 
 void Cpu::IllegalNopZeroPageX(){
     _val = _readPcAndInc();
-    _system->mem->ReadZP(_val);
-    _system->mem->ReadZP(_val + x);
+    _readZp(_val);
+    _readZp(_val + x);
 }
 
 void Cpu::IllegalNopImplied(){
@@ -923,75 +946,82 @@ void Cpu::Immediate(void (Cpu::*opcode)(), bool rmw, bool write) {
 
 void Cpu::Zeropage(void (Cpu::*opcode)(), bool rmw, bool write) {
     uint8_t zp = _readPcAndInc();
-    _val = _system->mem->ReadZP(zp);
-    if (rmw) _system->mem->WriteZP(zp, _val);
+    _val = _readZp(zp);
+    if (rmw) _writeZp(zp, _val);
     (this->*opcode)();
-    if (write) _system->mem->WriteZP(zp, _val);
+    if (write) _writeZp(zp, _val);
 }
 
 void Cpu::ZeropageX(void (Cpu::*opcode)(), bool rmw, bool write) {
     uint8_t zp = _readPcAndInc();
-    _val = _system->mem->ReadZP(zp + x);
-    if (rmw) _system->mem->WriteZP(zp + x, _val);
+    _val = _readZp(zp + x);
+    if (rmw) _writeZp(zp + x, _val);
     (this->*opcode)();
-    if (write) _system->mem->WriteZP(zp + x, _val);
+    if (write) _writeZp(zp + x, _val);
 }
 
 void Cpu::ZeropageY(void (Cpu::*opcode)(), bool rmw, bool write) {
     uint8_t zp = _readPcAndInc();
-    _val = _system->mem->ReadZP(zp + y);
-    if (rmw) _system->mem->WriteZP(zp + y, _val);
+    _val = _readZp(zp + y);
+    if (rmw) _writeZp(zp + y, _val);
     (this->*opcode)();
-    if (write) _system->mem->WriteZP(zp + y, _val);
+    if (write) _writeZp(zp + y, _val);
 }
 
 void Cpu::IndirectX(void (Cpu::*opcode)(), bool rmw, bool write) {
     uint8_t zp = _readPcAndInc();
-    _system->mem->ReadZP(zp);
-    _addr16.l = _system->mem->ReadZP(zp++ + x);
-    _addr16.h = _system->mem->ReadZP(zp++ + x);
-    _val = _system->mem->Read(_addr16.w);
-    if (rmw) _system->mem->Write(_addr16.w, _val);
+    _readZp(zp);
+    _addr16.l = _readZp(zp++ + x);
+    _addr16.h = _readZp(zp++ + x);
+    _val = _read(_addr16.w);
+    if (rmw) _write(_addr16.w, _val);
     (this->*opcode)();
-    if (write) _system->mem->Write(_addr16.w, _val);
+    if (write) _writeZp(_addr16.w, _val);
 }
 
 void Cpu::IndirectY(void (Cpu::*opcode)(), bool rmw, bool write) {
     _val = _readPcAndInc();
-    _addr16.l = _system->mem->ReadZP(_val++);
-    _addr16.h = _system->mem->ReadZP(_val++);
+    _addr16.l = _readZp(_val++);
+    _addr16.h = _readZp(_val++);
     _system->mem->PageIfRequired(_addr16.w, _addr16.w + y);
-    _val = _system->mem->Read(_addr16.w + y);
-    if (rmw) _system->mem->Write(_addr16.w + y, _val);
+    _val = _readZp(_addr16.w + y);
+    if (rmw) _write(_addr16.w + y, _val);
     (this->*opcode)();
-    if (write) _system->mem->Write(_addr16.w + y, _val);
+    if (write) _write(_addr16.w + y, _val);
 }
 
 void Cpu::Absolute(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
-    _val = _system->mem->Read(_addr16.w);
-    if (rmw) _system->mem->Write(_addr16.w, _val);
+    if (!rmw && !write) _testInterrupt();
+    _val = _read(_addr16.w);
+    if (rmw){
+        if (!write) _testInterrupt();
+        _write(_addr16.w, _val);
+    }
     (this->*opcode)();
-    if (write) _system->mem->Write(_addr16.w, _val);
+    if (write) {
+        _testInterrupt();
+        _write(_addr16.w, _val);
+    }
 }
 
 void Cpu::AbsoluteX(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
-    _val = _system->mem->Read(_addr16.w + x);
-    if (rmw) _system->mem->Write(_addr16.w + x, _val);
+    _val = _read(_addr16.w + x);
+    if (rmw) _write(_addr16.w + x, _val);
     (this->*opcode)();
-    if (write) _system->mem->Write(_addr16.w + x, _val);
+    if (write) _write(_addr16.w + x, _val);
 }
 
 void Cpu::AbsoluteY(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
-    _val = _system->mem->Read(_addr16.w + y);
-    if (rmw) _system->mem->Write(_addr16.w + y, _val);
+    _val = _read(_addr16.w + y);
+    if (rmw) _write(_addr16.w + y, _val);
     (this->*opcode)();
-    if (write) _system->mem->Write(_addr16.w + y, _val);
+    if (write) _write(_addr16.w + y, _val);
 }
 
 void Cpu::Read(void (Cpu::*operation)(void (Cpu::*)(), bool, bool), void (Cpu::*opcode)()) {
@@ -1011,9 +1041,9 @@ void Cpu::_testInterrupt(){
 }
 
 bool Cpu::Interrupt(){
-    _addClocks();
-    _addClocks();
     if (!_interruptPending) return false;
+    _addClocks();
+    _addClocks();
     _writeSp(pc >> 8);
     _writeSp(pc >> 0);
     _writeSp(p | 0x20);
@@ -1022,11 +1052,11 @@ bool Cpu::Interrupt(){
         _nmi = false;
         vector = 0xfffa;
     }
-    _addr16.l = _system->mem->Read(vector++);
+    _addr16.l = _read(vector++);
     p.i = 1;
     p.d = 0;
     _testInterrupt();
-    _addr16.h = _system->mem->Read(vector++);
+    _addr16.h = _read(vector++);
     pc = _addr16.w;
     return true;
 }

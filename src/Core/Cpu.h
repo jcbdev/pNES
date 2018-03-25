@@ -24,7 +24,7 @@ public:
     uint8_t a;
     uint16_t pc;
     CpuFlags p;
-    uint32_t clocks;
+    int32_t clocks;
 
     virtual void Reset() = 0;
     virtual void Cycle() = 0;
@@ -132,7 +132,9 @@ private:
     uint8_t _readPcAndInc();
     void _addClocks();
     uint8_t _read(uint16_t addr);
+    uint8_t _readZp(uint8_t zp);
     void _writeSp(uint8_t data);
+    void _writeZp(uint8_t zp, uint8_t data);
     uint8_t _readSp();
     void _write(uint16_t addr, uint8_t data);
     void _testInterrupt();

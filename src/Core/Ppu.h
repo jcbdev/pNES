@@ -33,8 +33,10 @@ class IPpu {
 public:
     explicit IPpu(ISystem* system);
 
+    int32_t clocks;
+    bool render;
+
     virtual void Reset() = 0;
-    virtual void Tick() = 0;
     virtual uint8_t CiramRead(uint16_t addr) = 0;
     virtual void CiramWrite(uint16_t addr, uint8_t data) = 0;
     virtual uint8_t CgramRead(uint16_t addr) = 0;
@@ -46,7 +48,7 @@ public:
 
     virtual void RasterPixel(unsigned x) = 0;
     virtual void RasterSprite() = 0;
-    virtual void RasterScanline() = 0;
+    virtual void Cycle() = 0;
 
     virtual uint16_t* ScreenBuffer() = 0;
 protected:
@@ -58,7 +60,6 @@ public:
     explicit Ppu(ISystem *system);
 
     void Reset() override;
-    void Tick() override;
     uint8_t CiramRead(uint16_t addr) override;
     void CiramWrite(uint16_t addr, uint8_t data) override;
     uint8_t CgramRead(uint16_t addr) override;
@@ -70,7 +71,7 @@ public:
 
     void RasterPixel(unsigned x) override;
     void RasterSprite() override;
-    void RasterScanline() override;
+    void Cycle() override;
 
     uint16_t* ScreenBuffer() override;
 private:
@@ -80,9 +81,18 @@ private:
     uint8_t _scrollX();
     void _scrollXIncrement();
     void _scrollYIncrement();
-    void _yIncrement();
+    void _scanlineIncrement();
     void _frameEdge();
     void _scanlineEdge();
+
+    void _addClocks();
+    void _preRenderScanline();
+    void _visibleDot();
+    void _fetchSpriteDataForNextScanline();
+    void _fetchTileDataForNextScanline();
+    void _fetchNameTable();
+    void _visibleScanline();
+    void _verticalBlankingLine();
 
     uint16_t _screenbuffer[256 * 262];
     uint8_t _ciram[2048];
@@ -90,8 +100,8 @@ private:
     uint8_t _oam[256];
 
     bool _field;
-    uint8_t _x;
-    uint8_t _y;
+    uint16_t _dot;
+    uint16_t _scanline;
 
     uint8_t _mbr;
     uint8_t _data;
@@ -127,6 +137,11 @@ private:
     uint8_t _oamAddr;
 
     Raster raster;
+    unsigned _nametableLatch;
+    unsigned _tileAddrLatch;
+    unsigned _attributeLatch;
+    unsigned _tileHiLatch;
+    unsigned _tileLoLatch;
 };
 
 

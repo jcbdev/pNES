@@ -16,9 +16,11 @@ Ppu::Ppu(ISystem* system) : IPpu::IPpu(system) {
 }
 
 void Ppu::Reset() {
+    render = false;
+    clocks = 1;
     _mbr = 0x00;
     _field = 0;
-    _y = 0;
+    _scanline = 0;
     _data = 0x00;
     _latch = 0;
 
@@ -36,10 +38,10 @@ void Ppu::Reset() {
 
     //$2001
     _bgrEmphasis = 0;
-    _spriteEnable = true;
-    _bgEnable = true;
-    _spriteLColEnable = true;
-    _bgLColEnable = true;
+    _spriteEnable = false;
+    _bgEnable = false;
+    _spriteLColEnable = false;
+    _bgLColEnable = false;
     _grayscale = false;
 
     //$2002
@@ -55,10 +57,6 @@ void Ppu::Reset() {
     memset(_ciram, 0, sizeof _ciram);
     memset(_cgram, 0, sizeof _cgram);
     memset(_oam, 0, sizeof _oam);
-}
-
-void Ppu::Tick() {
-
 }
 
 uint8_t Ppu::CiramRead(uint16_t addr){
@@ -117,9 +115,9 @@ void Ppu::_scrollYIncrement() {
     }
 }
 
-void Ppu::_yIncrement() {
-    if(++_y == 262) {
-        _y = 0;
+void Ppu::_scanlineIncrement() {
+    if(++_scanline == 262) {
+        _scanline = 0;
         _frameEdge();
     }
     _scanlineEdge();
@@ -130,11 +128,11 @@ uint8_t Ppu::Read(uint16_t addr){
 
     switch(addr & 7) {
         case 2:  //PPUSTATUS
-            value |= _nmiEnable << 7;
+            value |= _vblank << 7;
             value |= _spriteZeroHit << 6;
             value |= _spriteOverflow << 5;
             value |= _mbr & 0x1f;
-            _nmiEnable = 0;
+            _vblank = 0;
             _system->cpu->Nmi(false);
             //status.address_latch = 0;
             break;
@@ -143,7 +141,7 @@ uint8_t Ppu::Read(uint16_t addr){
             if((_oamAddr & 3) == 3) value &= 0xe3;
             break;
         case 7:  //PPUDATA
-            if(_rasterEnable() && (_y <= 240 || _y == 261)) return 0x00;
+            if(_rasterEnable() && (_scanline <= 240 || _scanline == 261)) return 0x00;
 
             addr = _vaddr & 0x3fff;
             if(addr <= 0x1fff) {
@@ -212,7 +210,7 @@ void Ppu::Write(uint16_t addr, uint8_t data){
             _latch ^= 1;
             return;
         case 7: //PPUDATA
-            if(_rasterEnable() && (_y <= 240 || _y == 261)) return;
+            if(_rasterEnable() && (_scanline <= 240 || _scanline == 261)) return;
 
             addr = _vaddr & 0x3fff;
             if(addr <= 0x1fff) {
@@ -234,23 +232,38 @@ uint8_t Ppu::ChrLoad(uint16_t addr){
 
 void Ppu::_frameEdge() {
     _field ^= 1;
-    //Render frame?
+    render = true;
 }
 
 void Ppu::_scanlineEdge() {
-    if(_y == 241) {
+    if(_scanline == 241) {
         _vblank = 1;
         if(_nmiEnable) _system->cpu->Nmi(1);
     }
-    if(_y == 261) {
+    if(_scanline == 261) {
         _vblank = 0;
         _system->cpu->Nmi(0);
         _spriteZeroHit = 0;
     }
+
+    _dot = 0;
+
+    raster.iterator = 0;
+    raster.counter = 0;
+
+    for(unsigned n = 0; n < 8; n++) {
+        raster.soam[n].id   = 64;
+        raster.soam[n].y    = 0xff;
+        raster.soam[n].tile = 0xff;
+        raster.soam[n].attributes = 0xff;
+        raster.soam[n].x    = 0xff;
+        raster.soam[n].tileLo = 0;
+        raster.soam[n].tileHi = 0;
+    }
 }
 
 void Ppu::RasterPixel(unsigned x) {
-    uint16_t *pixel = _screenbuffer + (_y * 256);
+    uint16_t *pixel = _screenbuffer + (_scanline * 256);
 
     unsigned mask = 0x8000 >> (_xaddr + x);
     unsigned palette = 0, object_palette = 0;
@@ -264,13 +277,13 @@ void Ppu::RasterPixel(unsigned x) {
     }
 
     if(_bgEnable == false) palette = 0;
-    if(_bgLColEnable == false && _x < 8) palette = 0;
+    if(_bgLColEnable == false && _dot < 8) palette = 0;
 
     for(signed sprite = 7; sprite >= 0; sprite--) {
-        if(_spriteLColEnable == false && _x < 8) continue;
+        if(_spriteLColEnable == false && _dot < 8) continue;
         if(raster.oam[sprite].id == 64) continue;
 
-        unsigned spritex = _x - raster.oam[sprite].x;
+        unsigned spritex = _dot - raster.oam[sprite].x;
         if(spritex >= 8) continue;
 
         if(raster.oam[sprite].attributes & 0x40) spritex ^= 7;
@@ -292,14 +305,14 @@ void Ppu::RasterPixel(unsigned x) {
     }
 
     if(_rasterEnable() == false) palette = 0;
-    pixel[_x++] = (_bgrEmphasis << 6) | CgramRead(palette);
+    pixel[_dot] = (_bgrEmphasis << 6) | CgramRead(palette);
 }
 
 void Ppu::RasterSprite() {
     if(_spriteEnable == false) return;
 
     unsigned n = raster.iterator++;
-    signed ly = (_y == 261 ? -1 : _y);
+    signed ly = (_scanline == 261 ? -1 : _scanline);
     unsigned y = ly - _oam[(n * 4) + 0];
 
     if(y >= _spriteHeight()) return;
@@ -316,145 +329,211 @@ void Ppu::RasterSprite() {
     raster.counter++;
 }
 
-void Ppu::RasterScanline() {
-    if((_y >= 240 && _y <= 260)) {
-        for(unsigned x = 0; x < 340; x++) Tick();
-        if(_rasterEnable() == false || _field != 1 || _y != 240) Tick();
-        return _yIncrement();
+void Ppu::_addClocks() {
+    clocks += 1;
+}
+
+void Ppu::Cycle() {
+    if (_scanline == 261) _visibleScanline();
+    else if (_scanline >= 0 && _scanline < 240) _visibleScanline();
+    else if (_scanline >= 240 && _scanline < 261) _verticalBlankingLine();
+}
+
+void Ppu::_preRenderScanline() {
+
+}
+
+void Ppu::_visibleScanline() {
+
+    if (_dot < 256) _visibleDot();
+    if (_dot >= 256 && _dot < 320) _fetchSpriteDataForNextScanline();
+    if (_dot >= 320 && _dot < 336) _fetchTileDataForNextScanline();
+    if (_dot >= 336 && _dot < 340) _fetchNameTable();
+    if (_dot == 340) _addClocks();
+
+    _dot++;
+    if (_dot == 341) _scanlineIncrement();
+}
+
+void Ppu::_visibleDot() {
+    unsigned tile = _dot / 32;
+    unsigned pixel = (_dot - (tile * 32)) / 8;
+
+    switch (pixel){
+        case 0 :
+            _nametableLatch = ChrLoad(0x2000 | (_vaddr & 0x0fff));
+            _tileAddrLatch = _bgTileSelect + (_nametableLatch << 4) + (_scrollY() & 7);
+            RasterPixel(pixel);
+            _addClocks();
+            break;
+        case 1:
+            RasterPixel(pixel);
+            _addClocks();
+            break;
+        case 2:
+            _attributeLatch = ChrLoad(0x23c0 | (_vaddr & 0x0fc0) | ((_scrollY() >> 5) << 3) | (_scrollX() >> 5));
+            if(_scrollY() & 16) _attributeLatch >>= 4;
+            if(_scrollX() & 16) _attributeLatch >>= 2;
+            RasterPixel(pixel);
+            _addClocks();
+            break;
+        case 3:
+            _scrollXIncrement();
+            if(tile == 31) _scrollYIncrement();
+            RasterPixel(pixel);
+            RasterSprite();
+            _addClocks();
+            break;
+        case 4:
+            _tileLoLatch = ChrLoad(_tileAddrLatch + 0);
+            RasterPixel(pixel);
+            _addClocks();
+            break;
+        case 5:
+            RasterPixel(pixel);
+            _addClocks();
+            break;
+        case 6:
+            _tileHiLatch = ChrLoad(_tileAddrLatch + 8);
+            RasterPixel(pixel);
+            _addClocks();
+            break;
+        case 7:
+            RasterPixel(7);
+            RasterSprite();
+            _addClocks();
+
+            raster.nametable = (raster.nametable << 8) | _nametableLatch;
+            raster.attribute = (raster.attribute << 2) | (_attributeLatch & 3);
+            raster.tileLo = (raster.tileLo << 8) | _tileLoLatch;
+            raster.tileHi = (raster.tileHi << 8) | _tileHiLatch;
+            break;
+    }
+}
+
+void Ppu::_fetchSpriteDataForNextScanline() {
+    if (_dot == 256) {
+        for(unsigned n = 0; n < 8; n++) raster.oam[n] = raster.soam[n];
     }
 
-    signed lx = 0, ly = (_y == 261 ? -1 : _y);
-    _x = 0;
+    unsigned sprite = (_dot - 256) / 8;
+    unsigned spriteOffset = _dot - (sprite * 8) - 256;
 
-    raster.iterator = 0;
-    raster.counter = 0;
-
-    for(unsigned n = 0; n < 8; n++) {
-        raster.soam[n].id   = 64;
-        raster.soam[n].y    = 0xff;
-        raster.soam[n].tile = 0xff;
-        raster.soam[n].attributes = 0xff;
-        raster.soam[n].x    = 0xff;
-        raster.soam[n].tileLo = 0;
-        raster.soam[n].tileHi = 0;
+    switch (spriteOffset){
+        case 0:
+            _nametableLatch = ChrLoad(0x2000 | (_vaddr & 0x0fff));
+            _addClocks();
+            break;
+        case 1:
+            if(_rasterEnable() && sprite == 0) _vaddr = (_vaddr & 0x7be0) | (_tileAddr & 0x041f);
+            _addClocks();
+            break;
+        case 2:
+            _attributeLatch = ChrLoad(0x23c0 | (_vaddr & 0x0fc0) | ((_scrollY() >> 5) << 3) | (_scrollX() >> 5));
+            _tileAddrLatch = (_spriteHeight() == 8)
+                                ? _spriteTileSelect + raster.oam[sprite].tile * 16
+                                : ((raster.oam[sprite].tile & ~1) * 16) + ((raster.oam[sprite].tile & 1) * 0x1000);
+            _addClocks();
+            break;
+        case 3:
+            _addClocks();
+            break;
+        case 4: {
+            unsigned spritey = (_scanline - raster.oam[sprite].y) & (_spriteHeight() - 1);
+            if (raster.oam[sprite].attributes & 0x80) spritey ^= (_spriteHeight() - 1);
+            _tileAddrLatch += spritey + (spritey & 8);
+            raster.oam[sprite].tileLo = ChrLoad(_tileAddrLatch + 0);
+            _addClocks();
+            break;
+            }
+        case 5:
+            _addClocks();
+            break;
+        case 6:
+            raster.oam[sprite].tileHi = ChrLoad(_tileAddrLatch + 8);
+            _addClocks();
+            break;
+        case 7:
+            _addClocks();
+            if(_rasterEnable() && sprite == 6 && _scanline == 261) _vaddr = _tileAddr;
+            break;
     }
+}
 
-    for(unsigned tile = 0; tile < 32; tile++) {  //  0-255
-        unsigned nametable = ChrLoad(0x2000 | (_vaddr & 0x0fff));
-        unsigned tileaddr = _bgTileSelect + (nametable << 4) + (_scrollY() & 7);
-        RasterPixel(0);
-        Tick();
+void Ppu::_fetchTileDataForNextScanline() {
+    unsigned tile = (_dot - 320) / 8;
+    unsigned tileOffset = _dot - (tile * 8) - 320;
 
-        RasterPixel(1);
-        Tick();
+    switch(tileOffset) {
+        case 0:
+            _nametableLatch = ChrLoad(0x2000 | (_vaddr & 0x0fff));
+            _tileAddrLatch = _bgTileSelect + (_nametableLatch << 4) + (_scrollY() & 7);
+            _addClocks();
+            break;
+        case 1:
+            _addClocks();
+            break;
+        case 2:
+            _attributeLatch = ChrLoad(0x23c0 | (_vaddr & 0x0fc0) | ((_scrollY() >> 5) << 3) | (_scrollX() >> 5));
+            if(_scrollY() & 16) _attributeLatch >>= 4;
+            if(_scrollX() & 16) _attributeLatch >>= 2;
+            _addClocks();
+            break;
+        case 3:
+            _scrollXIncrement();
+            _addClocks();
+            break;
+        case 4:
+            _tileLoLatch = ChrLoad(_tileAddrLatch + 0);
+            _addClocks();
+            break;
+        case 5:
+            _addClocks();
+            break;
+        case 6:
+            _tileHiLatch = ChrLoad(_tileAddrLatch + 8);
+            _addClocks();
+            break;
+        case 7:
+            _addClocks();
 
-        unsigned attribute = ChrLoad(0x23c0 | (_vaddr & 0x0fc0) | ((_scrollY() >> 5) << 3) | (_scrollX() >> 5));
-        if(_scrollY() & 16) attribute >>= 4;
-        if(_scrollX() & 16) attribute >>= 2;
-        RasterPixel(2);
-        Tick();
-
-        _scrollXIncrement();
-        if(tile == 31) _scrollYIncrement();
-        RasterPixel(3);
-        RasterSprite();
-        Tick();
-
-        unsigned tiledatalo = ChrLoad(tileaddr + 0);
-        RasterPixel(4);
-        Tick();
-
-        RasterPixel(5);
-        Tick();
-
-        unsigned tiledatahi = ChrLoad(tileaddr + 8);
-        RasterPixel(6);
-        Tick();
-
-        RasterPixel(7);
-        RasterSprite();
-        Tick();
-
-        raster.nametable = (raster.nametable << 8) | nametable;
-        raster.attribute = (raster.attribute << 2) | (attribute & 3);
-        raster.tileLo = (raster.tileLo << 8) | tiledatalo;
-        raster.tileHi = (raster.tileHi << 8) | tiledatahi;
+            raster.nametable = (raster.nametable << 8) | _nametableLatch;
+            raster.attribute = (raster.attribute << 2) | (_attributeLatch & 3);
+            raster.tileLo = (raster.tileLo << 8) | _tileLoLatch;
+            raster.tileHi = (raster.tileHi << 8) | _tileHiLatch;
+            break;
     }
+}
 
-    for(unsigned n = 0; n < 8; n++) raster.oam[n] = raster.soam[n];
-
-    for(unsigned sprite = 0; sprite < 8; sprite++) {  //256-319
-        unsigned nametable = ChrLoad(0x2000 | (_vaddr & 0x0fff));
-        Tick();
-
-        if(_rasterEnable() && sprite == 0) _vaddr = (_vaddr & 0x7be0) | (_tileAddr & 0x041f);  //257
-        Tick();
-
-        unsigned attribute = ChrLoad(0x23c0 | (_vaddr & 0x0fc0) | ((_scrollY() >> 5) << 3) | (_scrollX() >> 5));
-        unsigned tileaddr = (_spriteHeight() == 8)
-                            ? _spriteTileSelect + raster.oam[sprite].tile * 16
-                            : ((raster.oam[sprite].tile & ~1) * 16) + ((raster.oam[sprite].tile & 1) * 0x1000);
-        Tick();
-        Tick();
-
-        unsigned spritey = (_y - raster.oam[sprite].y) & (_spriteHeight() - 1);
-        if(raster.oam[sprite].attributes & 0x80) spritey ^= (_spriteHeight() - 1);
-        tileaddr += spritey + (spritey & 8);
-
-        raster.oam[sprite].tileLo = ChrLoad(tileaddr + 0);
-        Tick();
-        Tick();
-
-        raster.oam[sprite].tileHi = ChrLoad(tileaddr + 8);
-        Tick();
-        Tick();
-
-        if(_rasterEnable() && sprite == 6 && _y == 261) _vaddr = _tileAddr;  //304
+void Ppu::_fetchNameTable() {
+    switch(_dot){
+        case 336:
+            ChrLoad(0x2000 | (_vaddr & 0x0fff));
+            _addClocks();
+            break;
+        case 337:
+            _addClocks();
+            break;
+        case 338:
+            ChrLoad(0x2000 | (_vaddr & 0x0fff));
+            _addClocks();
+            break;
+        case 339:
+            _addClocks();
+            break;
     }
+}
 
-    for(unsigned tile = 0; tile < 2; tile++) {  //320-335
-        unsigned nametable = ChrLoad(0x2000 | (_vaddr & 0x0fff));
-        unsigned tileaddr = _bgTileSelect + (nametable << 4) + (_scrollY() & 7);
-        Tick();
-        Tick();
-
-        unsigned attribute = ChrLoad(0x23c0 | (_vaddr & 0x0fc0) | ((_scrollY() >> 5) << 3) | (_scrollX() >> 5));
-        if(_scrollY() & 16) attribute >>= 4;
-        if(_scrollX() & 16) attribute >>= 2;
-        Tick();
-
-        _scrollXIncrement();
-        Tick();
-
-        unsigned tiledatalo = ChrLoad(tileaddr + 0);
-        Tick();
-        Tick();
-
-        unsigned tiledatahi = ChrLoad(tileaddr + 8);
-        Tick();
-        Tick();
-
-        raster.nametable = (raster.nametable << 8) | nametable;
-        raster.attribute = (raster.attribute << 2) | (attribute & 3);
-        raster.tileLo = (raster.tileLo << 8) | tiledatalo;
-        raster.tileHi = (raster.tileHi << 8) | tiledatahi;
+void Ppu::_verticalBlankingLine() {
+    if (_dot < 340) _addClocks();
+    else {
+        if(_rasterEnable() == false || _field != 1 || _scanline != 240) _addClocks();
+        return _scanlineIncrement();
     }
-
-    //336-339
-    ChrLoad(0x2000 | (_vaddr & 0x0fff));
-    Tick();
-    Tick();
-
-    ChrLoad(0x2000 | (_vaddr & 0x0fff));
-    Tick();
-    Tick();
-
-    //340
-    Tick();
-
-    return _yIncrement();
+    _dot++;
 }
 
 uint16_t* Ppu::ScreenBuffer() {
+    render = false;
     return _screenbuffer;
 }

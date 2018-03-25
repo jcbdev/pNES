@@ -86,13 +86,17 @@ int main() {
             }
         }
 
-        if (cpu->Interrupt()) continue;
-        cpu->Cycle();
-        ppu->RasterScanline();
-        ppu->RasterScanline();
-        ppu->RasterScanline();
-        render(ppu->ScreenBuffer());
-        SDL_Delay(2);
+        cpu->clocks--;
+        ppu->clocks--;
+
+        if (cpu->clocks <= 0) {
+            if (cpu->Interrupt()) continue;
+            cpu->Cycle();
+        }
+        if (ppu->clocks <= 0) ppu->Cycle();
+
+        if (ppu->render) render(ppu->ScreenBuffer());
+        //SDL_Delay(2);
 
     }
 
