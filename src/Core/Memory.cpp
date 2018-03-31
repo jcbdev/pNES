@@ -41,20 +41,20 @@ uint8_t CpuMemory::ReadZP(uint8_t addr) {
 
 void CpuMemory::Write(uint16_t addr, uint8_t value) {
     if (addr < 0x2000) _ram[(uint16_t)(addr % 0x0800)] = value;
-    if (addr < 0x4000) return _system->ppu->Write(addr, value);
+    else if (addr < 0x4000) _system->ppu->Write(addr, value);
     //if (addr < 0x4000) _ppuregs[(uint16_t)((addr-0x2000) % 0x08)] = value;
-    if (addr < 0x4018) _nesapu[(uint16_t)(addr-0x4000)] = value;
-    if (addr < 0x4020) _apu[(uint16_t)(addr-0x4018)] = value;
-    _system->cart->PrgWrite(addr, value);
+    else if (addr < 0x4018) _nesapu[(uint16_t)(addr-0x4000)] = value;
+    else if (addr < 0x4020) _apu[(uint16_t)(addr-0x4018)] = value;
+    else _system->cart->PrgWrite(addr, value);
 }
 
 void CpuMemory::WriteZP(uint8_t addr, uint8_t value) {
     if (addr < 0x2000) _ram[(uint16_t)(addr % 0x0800)] = value;
-    if (addr < 0x4000) return _system->ppu->Write(addr, value);
+    else if (addr < 0x4000) return _system->ppu->Write(addr, value);
     //if (addr < 0x4000) _ppuregs[(uint16_t)((addr-0x2000) % 0x08)] = value;
-    if (addr < 0x4018) _nesapu[(uint16_t)(addr-0x4000)] = value;
-    if (addr < 0x4020) _apu[(uint16_t)(addr-0x4018)] = value;
-    _system->cart->PrgWrite(addr, value);
+    else if (addr < 0x4018) _nesapu[(uint16_t)(addr-0x4000)] = value;
+    else if (addr < 0x4020) _apu[(uint16_t)(addr-0x4018)] = value;
+    else _system->cart->PrgWrite(addr, value);
 }
 
 void CpuMemory::WriteRange(uint16_t start, uint16_t end, uint8_t value) {

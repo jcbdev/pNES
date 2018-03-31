@@ -49,8 +49,10 @@ public:
     virtual void RasterPixel(unsigned x) = 0;
     virtual void RasterSprite() = 0;
     virtual void Cycle() = 0;
+    virtual int16_t Scanline() = 0;
+    virtual uint16_t Dot() = 0;
 
-    virtual uint16_t* ScreenBuffer() = 0;
+    virtual uint8_t* ScreenBuffer() = 0;
 protected:
     ISystem* _system;
 };
@@ -72,8 +74,10 @@ public:
     void RasterPixel(unsigned x) override;
     void RasterSprite() override;
     void Cycle() override;
+    int16_t Scanline() override;
+    uint16_t Dot() override;
 
-    uint16_t* ScreenBuffer() override;
+    uint8_t* ScreenBuffer() override;
 private:
     bool _rasterEnable();
     uint8_t _spriteHeight();
@@ -93,15 +97,17 @@ private:
     void _fetchNameTable();
     void _visibleScanline();
     void _verticalBlankingLine();
+    void _initPalette();
+    uint8_t _clamp(unsigned x);
 
-    uint16_t _screenbuffer[256 * 262];
+    uint8_t _screenbuffer[256 * 261][3];
     uint8_t _ciram[2048];
     uint8_t _cgram[32];
     uint8_t _oam[256];
 
     bool _field;
     uint16_t _dot;
-    uint16_t _scanline;
+    int16_t _scanline;
 
     uint8_t _mbr;
     uint8_t _data;
@@ -142,6 +148,8 @@ private:
     unsigned _attributeLatch;
     unsigned _tileHiLatch;
     unsigned _tileLoLatch;
+
+    uint8_t _palette[256][3];
 };
 
 

@@ -57,6 +57,50 @@ void Ppu::Reset() {
     memset(_ciram, 0, sizeof _ciram);
     memset(_cgram, 0, sizeof _cgram);
     memset(_oam, 0, sizeof _oam);
+    _initPalette();
+}
+
+void Ppu::_initPalette() {
+    static const unsigned palette_[] = {
+            0x7c7c7c, 0x0000fc, 0x0000bc, 0x4428bc,
+            0x940084, 0xa80020, 0xa81000, 0x881400,
+            0x503000, 0x007800, 0x006800, 0x005800,
+            0x004058, 0x000000, 0x000000, 0x000000,
+            0xbcbcbc, 0x0078f8, 0x0058f8, 0x6844fc,
+            0xd800cc, 0xe40058, 0xf83800, 0xe45c10,
+            0xac7c00, 0x00b800, 0x00a800, 0x00a844,
+            0x008888, 0x000000, 0x000000, 0x000000,
+            0xf8f8f8, 0x3cbcfc, 0x6888fc, 0x9878f8,
+            0xf878f8, 0xf85898, 0xf87858, 0xfca044,
+            0xf8b800, 0xb8f818, 0x58d854, 0x58f898,
+            0x00e8d8, 0x787878, 0x000000, 0x000000,
+            0xfcfcfc, 0xa4e4fc, 0xb8b8b8, 0xd8d8f8,
+            0xf8b8f8, 0xf8a4c0, 0xf0d0b0, 0xfce0a8,
+            0xf8d878, 0xd8f878, 0xb8f8b8, 0xb8f8d8,
+            0x00fcfc, 0xf8d8f8, 0x000000, 0x000000,
+    };
+
+    memcpy(_palette, palette_, sizeof(palette_));
+
+    for (unsigned e = 1; e < 8; e++) {
+        static const double rfactor[8] = { 1.000, 1.239, 0.794, 1.019, 0.905, 1.023, 0.741, 0.750 };
+        static const double gfactor[8] = { 1.000, 0.915, 1.086, 0.980, 1.026, 0.908, 0.987, 0.750 };
+        static const double bfactor[8] = { 1.000, 0.743, 0.882, 0.653, 1.277, 0.979, 0.101, 0.750 };
+        for (unsigned n = 0; n < 64; n++) {
+            uint8_t r = _palette[n][0] >> 16, g = _palette[n][2] >> 8, b = _palette[n][2] >> 0;
+            r = _clamp((unsigned)(r * rfactor[e]));
+            g = _clamp((unsigned)(g * gfactor[e]));
+            b = _clamp((unsigned)(b * bfactor[e]));
+            _palette[e * 64 + n][0] = r;
+            _palette[e * 64 + n][1] = g;
+            _palette[e * 64 + n][2] = b;
+        }
+    }
+}
+
+uint8_t Ppu::_clamp(unsigned x) {
+    x = x>255 ? 255 : x;
+    return x<0 ? 0 : x;
 }
 
 uint8_t Ppu::CiramRead(uint16_t addr){
@@ -263,7 +307,10 @@ void Ppu::_scanlineEdge() {
 }
 
 void Ppu::RasterPixel(unsigned x) {
-    uint16_t *pixel = _screenbuffer + (_scanline * 256);
+    //uint16_t *pixel = _screenbuffer + (_scanline * 256);
+
+    if (_dot == 2)
+        _spriteOverflow = false;
 
     unsigned mask = 0x8000 >> (_xaddr + x);
     unsigned palette = 0, object_palette = 0;
@@ -293,7 +340,8 @@ void Ppu::RasterPixel(unsigned x) {
         sprite_palette |= (raster.oam[sprite].tileHi & mask) ? 2 : 0;
         if(sprite_palette == 0) continue;
 
-        if(raster.oam[sprite].id == 0 && palette) _spriteZeroHit = 1;
+        if(raster.oam[sprite].id == 0 )
+            _spriteZeroHit = 1;
         sprite_palette |= (raster.oam[sprite].attributes & 3) << 2;
 
         object_priority = raster.oam[sprite].attributes & 0x20;
@@ -305,7 +353,9 @@ void Ppu::RasterPixel(unsigned x) {
     }
 
     if(_rasterEnable() == false) palette = 0;
-    pixel[_dot] = (_bgrEmphasis << 6) | CgramRead(palette);
+    _screenbuffer[_dot + (_scanline * 256)][0] = _palette[(_bgrEmphasis << 6) | CgramRead(palette)][0];
+    _screenbuffer[_dot + (_scanline * 256)][1] = _palette[(_bgrEmphasis << 6) | CgramRead(palette)][1];
+    _screenbuffer[_dot + (_scanline * 256)][2] = _palette[(_bgrEmphasis << 6) | CgramRead(palette)][2];
 }
 
 void Ppu::RasterSprite() {
@@ -339,6 +389,14 @@ void Ppu::Cycle() {
     else if (_scanline >= 240 && _scanline < 261) _verticalBlankingLine();
 }
 
+int16_t Ppu::Scanline() {
+    return _scanline;
+}
+
+uint16_t Ppu::Dot() {
+    return _dot;
+}
+
 void Ppu::_preRenderScanline() {
 
 }
@@ -357,7 +415,7 @@ void Ppu::_visibleScanline() {
 
 void Ppu::_visibleDot() {
     unsigned tile = _dot / 32;
-    unsigned pixel = (_dot - (tile * 32)) / 8;
+    unsigned pixel = (_dot - (tile * 32)) / 4;
 
     switch (pixel){
         case 0 :
@@ -533,7 +591,8 @@ void Ppu::_verticalBlankingLine() {
     _dot++;
 }
 
-uint16_t* Ppu::ScreenBuffer() {
+uint8_t* Ppu::ScreenBuffer() {
     render = false;
-    return _screenbuffer;
+
+    return (uint8_t *)(_screenbuffer);
 }

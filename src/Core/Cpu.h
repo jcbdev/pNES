@@ -143,6 +143,8 @@ private:
     bool _nmiPending;
     bool _apu;
     bool _irq;
+    bool _dmaPending;
+    uint8_t _dmaPage;
 };
 
 
