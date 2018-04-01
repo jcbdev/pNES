@@ -61,7 +61,7 @@ void render(uint32_t* screenBuffer) {
     SDL_RenderClear(renderer);
 
     // Render the screen
-    SDL_RenderSetLogicalSize(renderer, 256, 240);
+    SDL_RenderSetLogicalSize(renderer, 512, 480);
     SDL_RenderCopy(renderer, buffer, NULL, NULL);
 
     // Render scanlines
@@ -76,7 +76,7 @@ void chrRender(uint32_t* chr) {
 
     SDL_RenderClear(chrRenderer);
 
-    SDL_RenderSetLogicalSize(chrRenderer, 256, 128);
+    SDL_RenderSetLogicalSize(chrRenderer, 512, 256);
     SDL_RenderCopy(chrRenderer, chrBuffer, NULL, NULL);
 
     SDL_RenderPresent(chrRenderer);
@@ -113,15 +113,15 @@ int main() {
         return 1;
     }
 
-    window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 256, 240, SDL_WINDOW_OPENGL);
-    chrWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 256, 128, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 512, 480, SDL_WINDOW_OPENGL);
+    chrWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 512, 256, SDL_WINDOW_OPENGL);
 
     //gl_context = SDL_GL_CreateContext(window);
 
     renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
     chrRenderer = SDL_CreateRenderer(chrWindow, 0, SDL_RENDERER_ACCELERATED);
     buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 256, 240);
-    chrBuffer = SDL_CreateTexture(chrRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 256, 128);
+    chrBuffer = SDL_CreateTexture(chrRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 256, 32);
 
     SDL_AddEventWatch(watch, NULL);
 

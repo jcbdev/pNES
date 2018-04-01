@@ -152,7 +152,7 @@ private:
     unsigned _tileLoLatch;
 
     uint8_t _palette[256][3];
-    uint32_t _chrData[0x8000];
+    uint32_t _chrData[0x2000];
 };
 
 

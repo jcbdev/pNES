@@ -615,7 +615,7 @@ uint32_t* Ppu::ScreenBuffer() {
 
 uint32_t* Ppu::ChrData() {
 
-    for(int i=0; i<_system->cart->Header.ChrRomSize*0x8000; i++)
+    for(int i=0; i<_system->cart->Header.ChrRomSize*0x2000; i++)
     {
         _chrData[i] = 0xFF000000;
         _chrData[i] |= (int32_t)_system->cart->ChrRead(i) << 16;
