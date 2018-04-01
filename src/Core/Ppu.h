@@ -52,7 +52,8 @@ public:
     virtual int16_t Scanline() = 0;
     virtual uint16_t Dot() = 0;
 
-    virtual uint8_t* ScreenBuffer() = 0;
+    virtual uint32_t* ScreenBuffer() = 0;
+    virtual uint32_t* ChrData() = 0;
 protected:
     ISystem* _system;
 };
@@ -77,7 +78,8 @@ public:
     int16_t Scanline() override;
     uint16_t Dot() override;
 
-    uint8_t* ScreenBuffer() override;
+    uint32_t* ScreenBuffer() override;
+    uint32_t* ChrData() override;
 private:
     bool _rasterEnable();
     uint8_t _spriteHeight();
@@ -100,7 +102,7 @@ private:
     void _initPalette();
     uint8_t _clamp(unsigned x);
 
-    uint8_t _screenbuffer[256 * 261][3];
+    uint32_t _screenbuffer[256 * 261];
     uint8_t _ciram[2048];
     uint8_t _cgram[32];
     uint8_t _oam[256];
@@ -150,6 +152,7 @@ private:
     unsigned _tileLoLatch;
 
     uint8_t _palette[256][3];
+    uint32_t _chrData[0x8000];
 };
 
 

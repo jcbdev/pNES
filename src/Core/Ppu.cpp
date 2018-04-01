@@ -87,7 +87,7 @@ void Ppu::_initPalette() {
         static const double gfactor[8] = { 1.000, 0.915, 1.086, 0.980, 1.026, 0.908, 0.987, 0.750 };
         static const double bfactor[8] = { 1.000, 0.743, 0.882, 0.653, 1.277, 0.979, 0.101, 0.750 };
         for (unsigned n = 0; n < 64; n++) {
-            uint8_t r = _palette[n][0] >> 16, g = _palette[n][2] >> 8, b = _palette[n][2] >> 0;
+            uint8_t r = _palette[n][0] >> 16, g = _palette[n][1] >> 8, b = _palette[n][2] >> 0;
             r = _clamp((unsigned)(r * rfactor[e]));
             g = _clamp((unsigned)(g * gfactor[e]));
             b = _clamp((unsigned)(b * bfactor[e]));
@@ -124,7 +124,7 @@ void Ppu::CgramWrite(uint16_t addr, uint8_t data){
 }
 
 bool Ppu::_rasterEnable() {
-    return (_bgEnable || _spriteEnable);
+    return ((_bgEnable || _spriteEnable) && _scanline != 261);
 }
 
 uint8_t Ppu::_spriteHeight() {
@@ -270,7 +270,8 @@ void Ppu::Write(uint16_t addr, uint8_t data){
 }
 
 uint8_t Ppu::ChrLoad(uint16_t addr){
-    if(_rasterEnable() == false) return 0x00;
+    if(_rasterEnable() == false)
+        return 0x00;
     return _system->cart->ChrRead(addr);
 }
 
@@ -288,6 +289,7 @@ void Ppu::_scanlineEdge() {
         _vblank = 0;
         _system->cpu->Nmi(0);
         _spriteZeroHit = 0;
+        _spriteOverflow = 0;
     }
 
     _dot = 0;
@@ -309,8 +311,8 @@ void Ppu::_scanlineEdge() {
 void Ppu::RasterPixel(unsigned x) {
     //uint16_t *pixel = _screenbuffer + (_scanline * 256);
 
-    if (_dot == 2)
-        _spriteOverflow = false;
+//    if (_dot == 2)
+//        _spriteOverflow = false;
 
     unsigned mask = 0x8000 >> (_xaddr + x);
     unsigned palette = 0, object_palette = 0;
@@ -340,7 +342,7 @@ void Ppu::RasterPixel(unsigned x) {
         sprite_palette |= (raster.oam[sprite].tileHi & mask) ? 2 : 0;
         if(sprite_palette == 0) continue;
 
-        if(raster.oam[sprite].id == 0 )
+        if(raster.oam[sprite].id == 0)// && palette)
             _spriteZeroHit = 1;
         sprite_palette |= (raster.oam[sprite].attributes & 3) << 2;
 
@@ -353,9 +355,10 @@ void Ppu::RasterPixel(unsigned x) {
     }
 
     if(_rasterEnable() == false) palette = 0;
-    _screenbuffer[_dot + (_scanline * 256)][0] = _palette[(_bgrEmphasis << 6) | CgramRead(palette)][0];
-    _screenbuffer[_dot + (_scanline * 256)][1] = _palette[(_bgrEmphasis << 6) | CgramRead(palette)][1];
-    _screenbuffer[_dot + (_scanline * 256)][2] = _palette[(_bgrEmphasis << 6) | CgramRead(palette)][2];
+    _screenbuffer[_dot + (_scanline * 256)] = 0xFF000000;
+    _screenbuffer[_dot + (_scanline * 256)] |= _palette[(_bgrEmphasis << 6) | CgramRead(palette)][0] << 16;
+    _screenbuffer[_dot + (_scanline * 256)] |= _palette[(_bgrEmphasis << 6) | CgramRead(palette)][1] << 8;
+    _screenbuffer[_dot + (_scanline * 256)] |= _palette[(_bgrEmphasis << 6) | CgramRead(palette)][2];
 }
 
 void Ppu::RasterSprite() {
@@ -384,7 +387,9 @@ void Ppu::_addClocks() {
 }
 
 void Ppu::Cycle() {
-    if (_scanline == 261) _visibleScanline();
+    if (_scanline == 261) {
+        _visibleScanline();
+    }
     else if (_scanline >= 0 && _scanline < 240) _visibleScanline();
     else if (_scanline >= 240 && _scanline < 261) _verticalBlankingLine();
 }
@@ -402,7 +407,6 @@ void Ppu::_preRenderScanline() {
 }
 
 void Ppu::_visibleScanline() {
-
     if (_dot < 256) _visibleDot();
     if (_dot >= 256 && _dot < 320) _fetchSpriteDataForNextScanline();
     if (_dot >= 320 && _dot < 336) _fetchTileDataForNextScanline();
@@ -465,6 +469,10 @@ void Ppu::_visibleDot() {
             raster.attribute = (raster.attribute << 2) | (_attributeLatch & 3);
             raster.tileLo = (raster.tileLo << 8) | _tileLoLatch;
             raster.tileHi = (raster.tileHi << 8) | _tileHiLatch;
+            _nametableLatch = 0;
+            _attributeLatch = 0;
+            _tileLoLatch = 0;
+            _tileHiLatch = 0;
             break;
     }
 }
@@ -514,6 +522,10 @@ void Ppu::_fetchSpriteDataForNextScanline() {
         case 7:
             _addClocks();
             if(_rasterEnable() && sprite == 6 && _scanline == 261) _vaddr = _tileAddr;
+            _nametableLatch = 0;
+            _attributeLatch = 0;
+            _tileLoLatch = 0;
+            _tileHiLatch = 0;
             break;
     }
 }
@@ -559,6 +571,10 @@ void Ppu::_fetchTileDataForNextScanline() {
             raster.attribute = (raster.attribute << 2) | (_attributeLatch & 3);
             raster.tileLo = (raster.tileLo << 8) | _tileLoLatch;
             raster.tileHi = (raster.tileHi << 8) | _tileHiLatch;
+            _nametableLatch = 0;
+            _attributeLatch = 0;
+            _tileLoLatch = 0;
+            _tileHiLatch = 0;
             break;
     }
 }
@@ -591,8 +607,21 @@ void Ppu::_verticalBlankingLine() {
     _dot++;
 }
 
-uint8_t* Ppu::ScreenBuffer() {
+uint32_t* Ppu::ScreenBuffer() {
     render = false;
 
-    return (uint8_t *)(_screenbuffer);
+    return (uint32_t *)(_screenbuffer);
+}
+
+uint32_t* Ppu::ChrData() {
+
+    for(int i=0; i<_system->cart->Header.ChrRomSize*0x8000; i++)
+    {
+        _chrData[i] = 0xFF000000;
+        _chrData[i] |= (int32_t)_system->cart->ChrRead(i) << 16;
+        _chrData[i] |= (int32_t)_system->cart->ChrRead(i) << 8;
+        _chrData[i] |= (int32_t)_system->cart->ChrRead(i) << 0;
+    }
+
+    return (uint32_t *)(_chrData);
 }

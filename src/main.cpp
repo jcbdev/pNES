@@ -8,9 +8,12 @@
 #include "Core/Ppu.h"
 
 static SDL_Window *window = NULL;
+static SDL_Window *chrWindow = NULL;
 //static SDL_GLContext gl_context;
 static SDL_Renderer *renderer = NULL;
+static SDL_Renderer *chrRenderer = NULL;
 static SDL_Texture  *buffer = NULL;
+static SDL_Texture  *chrBuffer = NULL;
 static bool quitting = false;
 
 SDL_Texture* generateScanlineTexture(SDL_Renderer* renderer)
@@ -51,30 +54,9 @@ SDL_Texture* generateScanlineTexture(SDL_Renderer* renderer)
     return scanlineTexture;
 }
 
-void render(uint8_t* screenBuffer) {
+void render(uint32_t* screenBuffer) {
 
-    //SDL_GL_MakeCurrent(window, gl_context);
-
-    //SDL_GL_SwapWindow(window);
-
-//    SDL_Texture* buffer = SDL_CreateTexture(renderer,
-//                                            SDL_PIXELFORMAT_ABGR8888,
-//                                            SDL_TEXTUREACCESS_STREAMING,
-//                                            256,
-//                                            262);
-//
-//    int pitch = 256;
-//    void *buf = malloc(256*262*2);
-//    SDL_LockTexture(buffer,
-//                    NULL,      // NULL means the *whole texture* here.
-//                    &buf,
-//                    &pitch);
-//
-//    memcpy(buf, screenBuffer, 256*262*2);
-//
-//    SDL_UnlockTexture(buffer);
-
-    SDL_UpdateTexture(buffer, NULL, screenBuffer, 256 * 3);
+    SDL_UpdateTexture(buffer, NULL, screenBuffer, 256 * sizeof(uint32_t));
 
     SDL_RenderClear(renderer);
 
@@ -88,6 +70,17 @@ void render(uint8_t* screenBuffer) {
 
     SDL_RenderPresent(renderer);
 } //render
+
+void chrRender(uint32_t* chr) {
+    SDL_UpdateTexture(chrBuffer, NULL, chr, 256 * sizeof(uint32_t));
+
+    SDL_RenderClear(chrRenderer);
+
+    SDL_RenderSetLogicalSize(chrRenderer, 256, 128);
+    SDL_RenderCopy(chrRenderer, chrBuffer, NULL, NULL);
+
+    SDL_RenderPresent(chrRenderer);
+}
 
 
 int SDLCALL watch(void *userdata, SDL_Event* event) {
@@ -121,11 +114,14 @@ int main() {
     }
 
     window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 256, 240, SDL_WINDOW_OPENGL);
+    chrWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 256, 128, SDL_WINDOW_OPENGL);
 
     //gl_context = SDL_GL_CreateContext(window);
 
     renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
-    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
+    chrRenderer = SDL_CreateRenderer(chrWindow, 0, SDL_RENDERER_ACCELERATED);
+    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 256, 240);
+    chrBuffer = SDL_CreateTexture(chrRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 256, 128);
 
     SDL_AddEventWatch(watch, NULL);
 
@@ -142,20 +138,26 @@ int main() {
         cpu->clocks--;
         ppu->clocks--;
 
+        if (ppu->clocks <= 0) ppu->Cycle();
+        if (ppu->Dot() == 340 && ppu->Scanline() == 0xF0) system->totalClocks = 0;
+
         if (cpu->clocks <= 0) {
             if (cpu->Interrupt()) continue;
             cpu->Cycle();
         }
-        if (ppu->clocks <= 0) ppu->Cycle();
 
-        if (ppu->render) render(ppu->ScreenBuffer());
-        //SDL_Delay(2);
-
+        if (ppu->render) {
+            render(ppu->ScreenBuffer());
+            chrRender(ppu->ChrData());
+        }
     }
 
     SDL_DelEventWatch(watch, NULL);
+    SDL_DestroyRenderer(chrRenderer);
+    SDL_DestroyTexture(chrBuffer);
+    SDL_DestroyWindow(chrWindow);
     SDL_DestroyRenderer(renderer);
-    //SDL_GL_DeleteContext(gl_context);
+    SDL_DestroyTexture(buffer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 

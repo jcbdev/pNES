@@ -10,6 +10,7 @@
 //#include "./Memory.h"
 //#include "../Rom/Cart.h"
 //#include "../Helpers/Logger.h"
+#include <stdint.h>
 
 class ICpu;
 class IMemory;
@@ -28,6 +29,7 @@ public:
     Cart* cart;
     IPpu* ppu;
     ILogger* logger;
+    uint32_t totalClocks;
 };
 
 class System : public ISystem {

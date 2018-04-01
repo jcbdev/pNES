@@ -15,13 +15,17 @@ struct Address16 {
 struct CpuFlags {
     bool n, v, d, i, z, c;
 
+    bool bit4, bit5;
+
     inline operator uint8_t() {
-        return (n << 7) | (v << 6) | (d << 3) | (i << 2) | (z << 1) | (c << 0);
+        return (n << 7) | (v << 6) | (bit5 << 5) | (bit4 << 4) | (d << 3) | (i << 2) | (z << 1) | (c << 0);
     }
 
     inline CpuFlags& operator=(uint8_t data) {
         n = data & 0x80;
         v = data & 0x40;
+        bit5 = data & 0x20;
+        bit4 = data & 0x10;
         d = data & 0x08;
         i = data & 0x04;
         z = data & 0x02;

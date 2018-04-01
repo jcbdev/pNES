@@ -138,6 +138,8 @@ private:
     uint8_t _readSp();
     void _write(uint16_t addr, uint8_t data);
     void _testInterrupt();
+    void _printClockDrift(uint8_t opcode);
+
     bool _interruptPending;
     bool _nmi;
     bool _nmiPending;
@@ -145,6 +147,7 @@ private:
     bool _irq;
     bool _dmaPending;
     uint8_t _dmaPage;
+    bool _paged;
 };
 
 
