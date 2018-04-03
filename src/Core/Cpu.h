@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <map>
 #include "System.h"
 #include "Core.h"
 
@@ -28,7 +29,6 @@ public:
 
     virtual void Reset() = 0;
     virtual void Cycle() = 0;
-    virtual void PrintCycle() = 0;
     virtual bool Interrupt() = 0;
     virtual void Apu(bool line) = 0;
     virtual void Irq(bool line) = 0;
@@ -45,7 +45,6 @@ public:
     explicit Cpu(ISystem* system);
 
     void Reset() override;
-    void PrintCycle() override;
     void Cycle() override;
     bool Interrupt() override;
     void Apu(bool line) override;
@@ -148,7 +147,9 @@ private:
     bool _dmaPending;
     uint8_t _dmaPage;
     bool _paged;
-};
 
+    int _pcCount;
+    bool _isOpCode;
+};
 
 #endif //LITTLEPNES_CPU_H

@@ -10,6 +10,7 @@ project(pNes)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 include(${CMAKE_SOURCE_DIR}/repo/FindSDL2/FindSDL2.cmake)
+include(${CMAKE_SOURCE_DIR}/repo/FindSDL2/FindSDL2_ttf.cmake)
 
 add_subdirectory(src)
 add_subdirectory(test)
