@@ -16,6 +16,7 @@ static SDL_Window *debugWindow = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Renderer *debugRenderer = NULL;
 static SDL_Texture  *buffer = NULL;
+
 //static SDL_Texture  *message = NULL;
 //static SDL_Texture  *debugBuffer = NULL;
 static TTF_Font* Sans = NULL;
@@ -134,7 +135,7 @@ void renderAssembly(Disassembly d, int line, int pc, int cursorPosition, bool is
 
 }
 
-void debugRender(IDebug *debug, ICpu *cpu){
+void debugRender(IDebug *debug, ICpu *cpu, bool isEditing, std::string gotoAddress){
     SDL_Color White = {255, 255, 255};
     SDL_Color Green = {0, 255, 0};
     int fsize = 12;
@@ -192,6 +193,13 @@ void debugRender(IDebug *debug, ICpu *cpu){
     renderText(debug->status.frame, 400, 118, White);
     renderText(debug->status.scanline, 400, 132, White);
     renderText(debug->status.dot, 400, 146, White);
+
+    if (isEditing) {
+        std::stringstream addr;
+        addr << "Goto address --> " << gotoAddress;
+        renderText(addr.str(), 800, 750, White);
+    }
+
     SDL_RenderPresent(debugRenderer);
 }
 
@@ -245,6 +253,8 @@ int main() {
     SDL_AddEventWatch(watch, NULL);
 
     cpu->Reset();
+    std::string gotoAddress = "8000";
+    bool isEditing = false;
     while(!quitting && !cpu->error) {
 
         SDL_Event event;
@@ -253,7 +263,28 @@ int main() {
                 quitting = true;
             }
 
-            if (event.type == SDL_KEYDOWN) {
+            if (event.type == SDL_KEYDOWN && isEditing) {
+                if (event.key.keysym.sym == SDLK_BACKSPACE){
+                    gotoAddress.pop_back();
+                }
+
+                else if (event.key.keysym.sym == SDLK_ESCAPE){
+                    SDL_StopTextInput();
+                    isEditing = false;
+                }
+
+                else if (event.key.keysym.sym == SDLK_RETURN){
+                    SDL_StopTextInput();
+                    isEditing = false;
+                    debug->cursorPosition = std::stoul(gotoAddress, nullptr, 16);
+                }
+
+
+            }
+            else if (event.type == SDL_TEXTINPUT) {
+                gotoAddress += event.text.text;
+            }
+            else if (event.type == SDL_KEYDOWN && !isEditing) {
                 if (event.key.keysym.sym == SDLK_d)
                     debug->pause = !debug->pause;
                 if (event.key.keysym.sym == SDLK_s) {
@@ -274,7 +305,15 @@ int main() {
                 if (event.key.keysym.sym == SDLK_SPACE) {
                     debug->AddBrk();
                 }
+                if (event.key.keysym.sym == SDLK_g) {
+                    isEditing = true;
+                    std::stringstream ss;
+                    ss << std::setfill('0') << std::setw(4) << (int)cpu->pc;
+                    gotoAddress = ss.str();
+                    SDL_StartTextInput();
+                }
             }
+
         }
 
         if (!debug->pause) {
@@ -305,12 +344,12 @@ int main() {
 
             if (ppu->render) {
                 render(ppu->ScreenBuffer());
-                debugRender(debug, cpu);
+                debugRender(debug, cpu, isEditing, gotoAddress);
             }
         }
         else{
             debug->Refresh();
-            debugRender(debug, cpu);
+            debugRender(debug, cpu, isEditing, gotoAddress);
         }
     }
 

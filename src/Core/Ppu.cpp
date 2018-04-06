@@ -19,10 +19,9 @@ Ppu::Ppu(ISystem* system) : IPpu::IPpu(system) {
 void Ppu::Reset() {
     render = false;
     clocks = 1;
-    buffer = 0x00;
     frameToggle = 0;
     //_scanline = 0;
-    _data = 0x00;
+    buffer = 0x00;
     _latch = 0;
 
     vaddr = 0x0000;
@@ -179,7 +178,7 @@ uint8_t Ppu::Read(uint16_t addr){
             value |= _vblank << 7;
             value |= _spriteZeroHit << 6;
             value |= _spriteOverflow << 5;
-            value |= buffer & 0x1f;
+            value |= _mdr & 0x1f;
             _vblank = 0;
             _system->cpu->Nmi(false);
             //status.address_latch = 0;
@@ -193,14 +192,14 @@ uint8_t Ppu::Read(uint16_t addr){
 
             addr = vaddr & 0x3fff;
             if(addr <= 0x1fff) {
-                value = _data;
-                _data = _system->cart->ChrRead(addr);
+                value = buffer;
+                buffer = _system->cart->ChrRead(addr);
             } else if(addr <= 0x3eff) {
-                value = _data;
-                _data = _system->cart->ChrRead(addr);
+                value = buffer;
+                buffer = _system->cart->ChrRead(addr);
             } else if(addr <= 0x3fff) {
                 value = CgramRead(addr);
-                _data = _system->cart->ChrRead(addr);
+                buffer = _system->cart->ChrRead(addr);
             }
             vaddr += _incrementMode;
             break;
@@ -210,7 +209,7 @@ uint8_t Ppu::Read(uint16_t addr){
 }
 
 void Ppu::Write(uint16_t addr, uint8_t data){
-    buffer = data;
+    _mdr = data;
 
     switch(addr & 7) {
         case 0: //PPUCTRL
@@ -301,7 +300,7 @@ uint8_t Ppu::PPUSTATUS() {
     val |= _vblank << 7;
     val |= _spriteZeroHit << 6;
     val |= _spriteOverflow << 5;
-    val |= buffer & 0x1f;
+    val |= _mdr & 0x1f;
     return val;
 }
 

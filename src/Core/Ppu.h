@@ -37,11 +37,12 @@ public:
     bool render;
     uint16_t dot;
     int16_t scanline;
-    uint8_t buffer;
+
     uint16_t vaddr;
     uint16_t xaddr;
     uint16_t tileAddr;
     bool frameToggle;
+    uint8_t buffer;
 
     virtual void Reset() = 0;
     virtual uint8_t CiramRead(uint16_t addr) = 0;
@@ -120,8 +121,9 @@ private:
     uint8_t _cgram[32];
     uint8_t _oam[256];
 
-    uint8_t _data;
+
     bool _latch;
+    uint8_t _mdr;
 
     //$2000 - PPUCTRL
     bool _nmiEnable;

@@ -36,7 +36,7 @@ IDebug::IDebug(ISystem *system){
 }
 
 Debug::Debug(ISystem *system) : IDebug::IDebug(system) {
-    breakpoints.push_back(0x814d);
+    //breakpoints.push_back(0x814d);
     breakpoints.push_back(0x8150);
     step = true;
     pause = true;
@@ -273,9 +273,9 @@ void Debug::_setStatus() {
     setvalue(status.buffer)
     output << "PPU0: " << hex2 << (int)_system->ppu->PPUSTATUS();
     setvalue(status.PPU0)
-    output << "PPU1: " << hex2 << (int)_system->ppu->PPUCTRL();
+    output << "PPU1: " << hex2 << (int)_system->ppu->PPUMASK();
     setvalue(status.PPU1)
-    output << "PPU2: " << hex2 << (int)_system->ppu->PPUMASK();
+    output << "PPU2: " << hex2 << (int)_system->ppu->PPUCTRL();
     setvalue(status.PPU2)
     output << "PPU3: " << hex2 << (int)_system->ppu->OAMADDR();
     setvalue(status.PPU3)
@@ -288,8 +288,9 @@ void Debug::Refresh() {
         _preDisassemble();
     }
     _setStatus();
-    if (isBrk(_system->cpu->pc) && !step) {
+    if (isBrk(_system->cpu->pc) && !step && !pause) {
         pause = true;
+        cursorPosition = _system->cpu->pc;
     }
     if (!pause || (step && pause)) {
         cursorPosition = _system->cpu->pc;
@@ -311,7 +312,11 @@ void Debug::GoPrev(){
 }
 
 void Debug::AddBrk() {
-    breakpoints.push_back(cursorPosition);
+    if(isBrk(cursorPosition))
+    {
+        breakpoints.remove(cursorPosition);
+    }
+    else breakpoints.push_back(cursorPosition);
 }
 
 bool Debug::isBrk(int line){
