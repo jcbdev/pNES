@@ -3,9 +3,11 @@
 //
 
 #include "PpuNew.h"
+#include "Memory.h"
+#include "Cpu.h"
 
 PpuNew::PpuNew(ISystem *system) {
-
+    _system = system;
 }
 
 uint8_t PpuNew::_readPalette(uint16_t address) {
@@ -118,14 +120,14 @@ void PpuNew::_writeAddress(uint8_t value) {
 
 // $2007: PPUDATA (read)
 uint8_t PpuNew::_readData() {
-    uint8_t value = Read(v);
+    uint8_t value = _system->mem->Read(v);
     // emulate buffered reads
     if (v%0x4000 < 0x3F00) {
         uint8_t buffered = bufferedData;
         bufferedData = value;
         value = buffered;
     } else {
-        bufferedData = Read(v - 0x1000);
+        bufferedData = _system->mem->Read(v - 0x1000);
     }
     // increment address
     if (flagIncrement == 0) {
@@ -138,7 +140,7 @@ uint8_t PpuNew::_readData() {
 
 // $2007: PPUDATA (write)
 void PpuNew::_writeData(uint8_t value) {
-    Write(v, value);
+    _system->mem->Write(v, value);
     if (flagIncrement == 0) {
         v += 1;
     } else {
@@ -150,14 +152,14 @@ void PpuNew::_writeData(uint8_t value) {
 void PpuNew::_writeDMA(uint8_t value) {
     uint16_t address = (uint16_t)(value) << 8;
     for (int i = 0; i < 256; i++) {
-        oamData[oamAddress] = cpu.Read(address);
+        oamData[oamAddress] = _system->mem->Read(address);
         oamAddress++;
         address++;
     }
-    cpu.stall += 513;
-    if (cpu.Cycles%2 == 1) {
-        cpu.stall++;
-    }
+    _system->cpu->clocks += 513;
+//    if (cpu.Cycles%2 == 1) {
+//        cpu.stall++;
+//    }
 }
 
 // NTSC Timing Helper Functions
@@ -238,25 +240,25 @@ void PpuNew::_clearVerticalBlank() {
 
 void PpuNew::_fetchNameTableByte() {
     uint16_t address = 0x2000 | (v & 0x0FFF);
-    nameTableByte = Read(address);
+    nameTableByte = _system->mem->Read(address);
 }
 
 void PpuNew::_fetchAttributeTableByte() {
     uint16_t address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
     uint8_t shift = ((v >> 4) & 4) | (v & 2);
-    attributeTableByte = ((Read(address) >> shift) & 3) << 2;
+    attributeTableByte = ((_system->mem->Read(address) >> shift) & 3) << 2;
 }
 
 void PpuNew::_fetchLowTileByte() {
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*(uint16_t)(flagBackgroundTable) + (uint16_t)(nameTableByte)*16 + fineY;
-    lowTileByte = Read(address);
+    lowTileByte = _system->mem->Read(address);
 }
 
 void PpuNew::_fetchHighTileByte() {
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*(uint16_t)(flagBackgroundTable) + (uint16_t)(nameTableByte)*16 + fineY;
-    highTileByte = Read(address + 8);
+    highTileByte = _system->mem->Read(address + 8);
 }
 
 void PpuNew::_storeTileData() {
@@ -340,46 +342,182 @@ void PpuNew::_renderPixel() {
 }
 
 uint32_t PpuNew::_fetchSpritePattern(int i, int row) {
-    tile := ppu.oamData[i*4+1]
-    attributes := ppu.oamData[i*4+2]
-    var address uint16
-    if ppu.flagSpriteSize == 0 {
-    if attributes&0x80 == 0x80 {
-    row = 7 - row
-    }
-    table := ppu.flagSpriteTable
-    address = 0x1000*uint16(table) + uint16(tile)*16 + uint16(row)
+    uint8_t tile = oamData[i*4+1];
+    uint8_t attributes = oamData[i*4+2];
+    uint16_t address;
+    if (flagSpriteSize == 0) {
+        if (attributes&0x80 == 0x80) {
+            row = 7 - row;
+        }
+        uint8_t table = flagSpriteTable;
+        address = 0x1000*(uint16_t)(flagSpriteTable) + (uint16_t)(tile)*16 + (uint16_t)(row);
     } else {
-    if attributes&0x80 == 0x80 {
-    row = 15 - row
+        if (attributes&0x80 == 0x80) {
+            row = 15 - row;
+        }
+        uint8_t table = tile & 1;
+        tile &= 0xFE;
+        if (row > 7) {
+            tile++;
+            row -= 8;
+        }
+        address = 0x1000*(uint16_t)(table) + (uint16_t)(tile)*16 + (uint16_t)(row);
     }
-    table := tile & 1
-    tile &= 0xFE
-    if row > 7 {
-    tile++
-    row -= 8
+    uint8_t a = (attributes & 3) << 2;
+    lowTileByte = _system->mem->Read(address);
+    highTileByte = _system->mem->Read(address + 8);
+    uint32_t data;
+    for (int i = 0; i < 8; i++) {
+        uint8_t p1, p2;
+        if (attributes&0x40 == 0x40) {
+            p1 = (lowTileByte & 1) << 0;
+            p2 = (highTileByte & 1) << 1;
+            lowTileByte >>= 1;
+            highTileByte >>= 1;
+        } else {
+            p1 = (lowTileByte & 0x80) >> 7;
+            p2 = (highTileByte & 0x80) >> 6;
+            lowTileByte <<= 1;
+            highTileByte <<= 1;
+        }
+        data <<= 4;
+        data |= (uint32_t)(a | p1 | p2);
     }
-    address = 0x1000*uint16(table) + uint16(tile)*16 + uint16(row)
-    }
-    a := (attributes & 3) << 2
-    lowTileByte := ppu.Read(address)
-    highTileByte := ppu.Read(address + 8)
-    var data uint32
-    for i := 0; i < 8; i++ {
-    var p1, p2 byte
-    if attributes&0x40 == 0x40 {
-    p1 = (lowTileByte & 1) << 0
-    p2 = (highTileByte & 1) << 1
-    lowTileByte >>= 1
-    highTileByte >>= 1
+    return data;
+}
+
+void PpuNew::_evaluateSprites() {
+    int h;
+    if (flagSpriteSize == 0) {
+        h = 8;
     } else {
-    p1 = (lowTileByte & 0x80) >> 7
-    p2 = (highTileByte & 0x80) >> 6
-    lowTileByte <<= 1
-    highTileByte <<= 1
+        h = 16;
     }
-    data <<= 4
-    data |= uint32(a | p1 | p2)
+    int count = 0;
+    for (int i = 0; i < 64; i++) {
+        uint8_t y = oamData[i*4+0];
+        uint8_t a = oamData[i*4+2];
+        uint8_t x = oamData[i*4+3];
+        int row = ScanLine - int(y);
+        if (row < 0 || row >= h) {
+            continue;
+        }
+        if (count < 8) {
+            spritePatterns[count] = _fetchSpritePattern(i, row);
+            spritePositions[count] = x;
+            spritePriorities[count] = (a >> 5) & 1;
+            spriteIndexes[count] = uint8_t(i);
+        }
+        count++;
     }
-    return data
+    if (count > 8) {
+        count = 8;
+        flagSpriteOverflow = 1;
+    }
+    spriteCount = count;
+}
+
+void PpuNew::tick() {
+    if (nmiDelay > 0) {
+        nmiDelay--;
+        if (nmiDelay == 0 && nmiOutput && nmiOccurred) {
+            _system->cpu->Nmi(true);
+        }
+    }
+
+    if (flagShowBackground != 0 || flagShowSprites != 0) {
+        if (f == 1 && ScanLine == 261 && Cycle == 339) {
+            Cycle = 0;
+            ScanLine = 0;
+            Frame++;
+            f ^= 1;
+            return;
+        }
+    }
+    Cycle++;
+    if (Cycle > 340) {
+        Cycle = 0;
+        ScanLine++;
+        if (ScanLine > 261) {
+            ScanLine = 0;
+            Frame++;
+            f ^= 1;
+        }
+    }
+}
+
+// Step executes a single PPU cycle
+void PpuNew::Step() {
+    tick();
+
+    bool renderingEnabled = flagShowBackground != 0 || flagShowSprites != 0;
+    bool preLine = ScanLine == 261;
+    bool visibleLine = ScanLine < 240;
+    // bool postLine = ScanLine == 240;
+    bool renderLine = preLine || visibleLine;
+    bool preFetchCycle = Cycle >= 321 && Cycle <= 336;
+    bool visibleCycle = Cycle >= 1 && Cycle <= 256;
+    bool fetchCycle = preFetchCycle || visibleCycle;
+
+    // background logic
+    if (renderingEnabled) {
+        if (visibleLine && visibleCycle) {
+            _renderPixel();
+        }
+        if (renderLine && fetchCycle) {
+            tileData <<= 4;
+            switch (Cycle % 8) {
+                case 1:
+                    _fetchNameTableByte();
+                    break;
+                case 3:
+                    _fetchAttributeTableByte();
+                    break;
+                case 5:
+                    _fetchLowTileByte();
+                    break;
+                case 7:
+                    _fetchHighTileByte();
+                    break;
+                case 0:
+                    _storeTileData();
+                    break;
+            }
+        }
+        if (preLine && Cycle >= 280 && Cycle <= 304) {
+            _copyY();
+        }
+        if (renderLine) {
+            if (fetchCycle && Cycle%8 == 0) {
+                _incrementX();
+            }
+            if (Cycle == 256) {
+                _incrementY();
+            }
+            if (Cycle == 257) {
+                _copyX();
+            }
+        }
+    }
+
+    // sprite logic
+    if (renderingEnabled) {
+        if (Cycle == 257) {
+            if (visibleLine) {
+                _evaluateSprites();
+            } else {
+                spriteCount = 0;
+            }
+        }
+    }
+
+    // vblank logic
+    if (ScanLine == 241 && Cycle == 1) {
+        _setVerticalBlank();
+    }
+    if (preLine && Cycle == 1) {
+        _clearVerticalBlank();
+        flagSpriteZeroHit = 0;
+        flagSpriteOverflow = 0;
+    }
 }
