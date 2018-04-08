@@ -229,7 +229,8 @@ int main() {
     Debug *debug = new Debug(system);
 
     system->Configure(cpu, memory, cart, ppu, debug, logger);
-    cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
+    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
+    cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
     system->Reset();
 
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) != 0) {
@@ -238,7 +239,8 @@ int main() {
     }
 
     TTF_Init();
-    Sans = TTF_OpenFont("/home/jimbo/CLionProjects/pNES/Monospace.ttf", 12); //this opens a font style and sets a size
+    //Sans = TTF_OpenFont("/home/jimbo/CLionProjects/pNES/Monospace.ttf", 12); //this opens a font style and sets a size
+    Sans = TTF_OpenFont("/Users/james/ClionProjects/LittlePNes/Monospace.ttf", 12); //this opens a font style and sets a size
 
     window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 512, 480, SDL_WINDOW_OPENGL);
     debugWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, SDL_WINDOW_OPENGL);

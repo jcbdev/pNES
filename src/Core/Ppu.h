@@ -64,7 +64,7 @@ public:
     virtual uint8_t OAMADDR() = 0;
 
     virtual uint32_t* ScreenBuffer() = 0;
-    virtual uint32_t* ChrData() = 0;
+    virtual uint8_t* ChrRam() = 0;
 protected:
     ISystem* _system;
 };
@@ -93,7 +93,7 @@ public:
     uint8_t OAMADDR() override;
 
     uint32_t* ScreenBuffer() override;
-    uint32_t* ChrData() override;
+    uint8_t* ChrRam() override;
 private:
     bool _rasterEnable();
     uint8_t _spriteHeight();
@@ -158,7 +158,6 @@ private:
     unsigned _tileLoLatch;
 
     uint8_t _palette[256][3];
-    uint32_t _chrData[0x2000];
     uint32_t _totalCycles;
 
     const uint32_t paletteRGB[64] = {

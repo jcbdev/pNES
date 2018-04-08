@@ -6,7 +6,7 @@ include_directories(${SDL2_INCLUDE_DIR})
 
 set(SOURCE_FILES
         Core/Cpu.cpp Core/Cpu.h Core/Memory.cpp Core/Memory.h Core/Core.h
-        Core/Ppu.h Core/Ppu.cpp Core/System.h Core/System.cpp
+        Core/Ppu.h Core/Ppu.cpp Core/System.h Core/System.cpp Core/PpuNew.h Core/PpuNew.cpp
         Helpers/Logger.h Helpers/Logger.cpp
         Rom/Cart.h Rom/Cart.cpp Rom/RomHeader.h Rom/RomTypes.h
         Rom/Nrom.cpp Rom/Nrom.h Core/System.cpp Core/System.h Core/Debug.cpp Core/Debug.h)

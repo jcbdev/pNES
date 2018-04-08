@@ -660,15 +660,6 @@ uint32_t* Ppu::ScreenBuffer() {
     return (uint32_t *)(_screenbuffer);
 }
 
-uint32_t* Ppu::ChrData() {
-
-    for(int i=0; i<_system->cart->Header.ChrRomSize*0x2000; i++)
-    {
-        _chrData[i] = 0xFF000000;
-        _chrData[i] |= (int32_t)_system->cart->ChrRead(i) << 16;
-        _chrData[i] |= (int32_t)_system->cart->ChrRead(i) << 8;
-        _chrData[i] |= (int32_t)_system->cart->ChrRead(i) << 0;
-    }
-
-    return (uint32_t *)(_chrData);
+uint8_t* Ppu::ChrRam() {
+    return _ciram;
 }
