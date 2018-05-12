@@ -9,6 +9,7 @@
 #include "Rom/Nrom.h"
 #include "Core/Ppu.h"
 #include "Core/Debug.h"
+#include "Core/PpuNew.h"
 
 static SDL_Window *window = NULL;
 static SDL_Window *debugWindow = NULL;
@@ -225,7 +226,7 @@ int main() {
     Cart *cart = new Nrom(system);
     CpuMemory *memory = new CpuMemory(system);
     Cpu *cpu = new Cpu(system);
-    Ppu *ppu = new Ppu(system);
+    PpuNew *ppu = new PpuNew(system);
     Debug *debug = new Debug(system);
 
     system->Configure(cpu, memory, cart, ppu, debug, logger);
@@ -341,7 +342,7 @@ int main() {
                 if (debug->pause) debug->cursorPosition = cpu->pc;
             }
 
-            if (ppu->clocks <= 0) ppu->Cycle();
+            if (ppu->clocks <= 0) ppu->Step();
             if (ppu->dot == 340 && ppu->scanline == 0xF0) system->totalClocks = 0;
 
             if (ppu->render) {

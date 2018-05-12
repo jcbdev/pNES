@@ -54,9 +54,9 @@ public:
     virtual uint8_t Read(uint16_t addr) = 0;
     virtual void Write(uint16_t addr, uint8_t data) = 0;
 
-    virtual void RasterPixel(unsigned x) = 0;
-    virtual void RasterSprite() = 0;
-    virtual void Cycle() = 0;
+    //virtual void RasterPixel(unsigned x) = 0;
+    //virtual void RasterSprite() = 0;
+    virtual void Step() = 0;
 
     virtual uint8_t PPUCTRL() = 0;
     virtual uint8_t PPUMASK() = 0;
@@ -64,7 +64,7 @@ public:
     virtual uint8_t OAMADDR() = 0;
 
     virtual uint32_t* ScreenBuffer() = 0;
-    virtual uint8_t* ChrRam() = 0;
+
 protected:
     ISystem* _system;
 };
@@ -83,9 +83,9 @@ public:
     uint8_t Read(uint16_t addr) override;
     void Write(uint16_t addr, uint8_t data) override;
 
-    void RasterPixel(unsigned x) override;
-    void RasterSprite() override;
-    void Cycle() override;
+    //void RasterPixel(unsigned x) override;
+    //void RasterSprite() override;
+    void Step() override;
 
     uint8_t PPUCTRL() override;
     uint8_t PPUMASK() override;
@@ -93,7 +93,7 @@ public:
     uint8_t OAMADDR() override;
 
     uint32_t* ScreenBuffer() override;
-    uint8_t* ChrRam() override;
+
 private:
     bool _rasterEnable();
     uint8_t _spriteHeight();
@@ -115,6 +115,8 @@ private:
     void _verticalBlankingLine();
     void _initPalette();
     uint8_t _clamp(unsigned x);
+    void _rasterPixel(unsigned x);
+    void _rasterSprite();
 
     uint32_t _screenbuffer[256 * 261];
     uint8_t _ciram[2048];

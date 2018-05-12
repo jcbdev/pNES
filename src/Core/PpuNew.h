@@ -12,10 +12,30 @@ struct spr {
     uint8_t b;
 };
 
-class PpuNew {
+class PpuNew : public IPpu {
 public:
     explicit PpuNew(ISystem *system);
 
+    void Reset() override;
+    uint8_t CiramRead(uint16_t addr) override;
+    void CiramWrite(uint16_t addr, uint8_t data) override;
+    uint8_t CgramRead(uint16_t addr) override;
+    void CgramWrite(uint16_t addr, uint8_t data) override;
+    uint8_t ChrLoad(uint16_t addr) override;
+
+    uint8_t Read(uint16_t addr) override;
+    void Write(uint16_t addr, uint8_t data) override;
+
+    void Step() override;
+
+    uint8_t PPUCTRL() override;
+    uint8_t PPUMASK() override;
+    uint8_t PPUSTATUS() override;
+    uint8_t OAMADDR() override;
+
+    uint32_t* ScreenBuffer() override;
+
+private:
     uint8_t _readPalette(uint16_t address);
     void _writePalette(uint16_t address, uint8_t value);
     void _writeControl(uint8_t value);
@@ -49,7 +69,7 @@ public:
     void _evaluateSprites();
 
     void tick();
-    void Step();
+
 
     int Cycle;    // 0-340
     int ScanLine;    // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
@@ -116,6 +136,8 @@ public:
 
     // $2007 PPUDATA
     uint8_t bufferedData; // for buffered reads
+
+    uint32_t _screenbuffer[256 * 261];
 
     const uint32_t Palette[64] = {
             0x7c7c7c,
@@ -184,8 +206,6 @@ public:
             0x000000
     };
 
-protected:
-    ISystem *_system;
 };
 
 #endif //PNES_PPUNEW_H

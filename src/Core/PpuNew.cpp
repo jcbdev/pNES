@@ -5,9 +5,10 @@
 #include "PpuNew.h"
 #include "Memory.h"
 #include "Cpu.h"
+#include "../Rom/Cart.h"
 
-PpuNew::PpuNew(ISystem *system) {
-    _system = system;
+PpuNew::PpuNew(ISystem *system) : IPpu(system) {
+
 }
 
 uint8_t PpuNew::_readPalette(uint16_t address) {
@@ -120,14 +121,14 @@ void PpuNew::_writeAddress(uint8_t value) {
 
 // $2007: PPUDATA (read)
 uint8_t PpuNew::_readData() {
-    uint8_t value = _system->mem->Read(v);
+    uint8_t value = _system->cart->ChrRead(v);
     // emulate buffered reads
     if (v%0x4000 < 0x3F00) {
         uint8_t buffered = bufferedData;
         bufferedData = value;
         value = buffered;
     } else {
-        bufferedData = _system->mem->Read(v - 0x1000);
+        bufferedData = _system->cart->ChrRead(v - 0x1000);
     }
     // increment address
     if (flagIncrement == 0) {
@@ -339,6 +340,7 @@ void PpuNew::_renderPixel() {
     }
     uint8_t c = Palette[_readPalette((uint16_t)(color))%64];
     //ppu.back.SetRGBA(x, y, c)
+    _screenbuffer[Cycle + (ScanLine * 256)] = c;
 }
 
 uint32_t PpuNew::_fetchSpritePattern(int i, int row) {
@@ -418,6 +420,7 @@ void PpuNew::_evaluateSprites() {
 }
 
 void PpuNew::tick() {
+    clocks++;
     if (nmiDelay > 0) {
         nmiDelay--;
         if (nmiDelay == 0 && nmiOutput && nmiOccurred) {
@@ -441,6 +444,7 @@ void PpuNew::tick() {
         if (ScanLine > 261) {
             ScanLine = 0;
             Frame++;
+            render = true;
             f ^= 1;
         }
     }
@@ -520,4 +524,84 @@ void PpuNew::Step() {
         flagSpriteZeroHit = 0;
         flagSpriteOverflow = 0;
     }
+}
+
+void PpuNew::Reset() {
+    Cycle = 340;
+    ScanLine = 240;
+    Frame = 0;
+    _writeControl(0);
+    _writeMask(0);
+    _writeOAMAddress(0);
+}
+
+uint8_t PpuNew::CiramRead(uint16_t addr){
+    return nameTableData[addr & 0x07ff];
+}
+
+void PpuNew::CiramWrite(uint16_t addr, uint8_t data){
+    nameTableData[addr & 0x07ff] = data;
+}
+
+uint8_t PpuNew::CgramRead(uint16_t addr) {
+    return _readPalette(addr);
+}
+
+void PpuNew::CgramWrite(uint16_t addr, uint8_t data){
+    _writePalette(addr, data);
+}
+
+uint8_t PpuNew::ChrLoad(uint16_t addr) {
+    return 0;
+}
+
+uint8_t PpuNew::Read(uint16_t addr) {
+    return _readData();
+}
+
+void PpuNew::Write(uint16_t addr, uint8_t data) {
+
+}
+
+
+uint8_t PpuNew::PPUCTRL() {
+    uint8_t val;
+    val = (nmiDelay > 0) << 7;
+    val |= flagMasterSlave << 6;
+    val |= flagSpriteSize << 5;
+    val |= (flagBackgroundTable == 0x1000 ? 1 : 0) << 4;
+    val |= (flagSpriteTable == 0x1000 ? 1 : 0) << 3;
+    val |= (flagIncrement == 32 ? 1 : 0) << 2;
+    val |= (tileData & 0x03) << 1;
+    return val;
+}
+
+uint8_t PpuNew::PPUMASK() {
+    uint8_t val;
+    val = flagRedTint << 7;
+    val |= flagShowSprites << 4;
+    val |= flagShowBackground << 3;
+    val |= flagShowLeftSprites << 2;
+    val |= flagShowLeftBackground << 1;
+    val |= flagGrayscale << 0;
+    return val;
+}
+
+uint8_t PpuNew::PPUSTATUS() {
+    uint8_t val;
+    val |= nmiOccurred << 7;
+    val |= flagSpriteZeroHit << 6;
+    val |= flagSpriteOverflow << 5;
+    val |= bufferedData & 0x1f;
+    return val;
+}
+
+uint8_t PpuNew::OAMADDR() {
+    return oamAddress;
+}
+
+uint32_t* PpuNew::ScreenBuffer() {
+    render = false;
+
+    return (uint32_t *)(_screenbuffer);
 }

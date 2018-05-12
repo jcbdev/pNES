@@ -348,7 +348,7 @@ void Ppu::_scanlineEdge() {
     }
 }
 
-void Ppu::RasterPixel(unsigned x) {
+void Ppu::_rasterPixel(unsigned x) {
     //uint16_t *pixel = _screenbuffer + (_scanline * 256);
 
 
@@ -400,7 +400,7 @@ void Ppu::RasterPixel(unsigned x) {
     _screenbuffer[dot + (scanline * 256)] = 0xFF000000 + paletteRGB[(_bgrEmphasis << 6) | CgramRead(palette)];
 }
 
-void Ppu::RasterSprite() {
+void Ppu::_rasterSprite() {
     if(_spriteEnable == false) return;
 
     unsigned n = raster.iterator++;
@@ -426,7 +426,7 @@ void Ppu::_addClocks() {
     _totalCycles++;
 }
 
-void Ppu::Cycle() {
+void Ppu::Step() {
     //_system->logger->Log("Cycle");
     if (scanline == 261) {
         _visibleScanline();
@@ -463,44 +463,44 @@ void Ppu::_visibleDot() {
         case 0 :
             _nametableLatch = ChrLoad(0x2000 | (vaddr & 0x0fff));
             _tileAddrLatch = _bgTileSelect + (_nametableLatch << 4) + (_scrollY() & 7);
-            RasterPixel(pixel);
+            _rasterPixel(pixel);
             _addClocks();
             break;
         case 1:
-            RasterPixel(pixel);
+            _rasterPixel(pixel);
             _addClocks();
             break;
         case 2:
             _attributeLatch = ChrLoad(0x23c0 | (vaddr & 0x0fc0) | ((_scrollY() >> 5) << 3) | (_scrollX() >> 5));
             if(_scrollY() & 16) _attributeLatch >>= 4;
             if(_scrollX() & 16) _attributeLatch >>= 2;
-            RasterPixel(pixel);
+            _rasterPixel(pixel);
             _addClocks();
             break;
         case 3:
             _scrollXIncrement();
             if(tile == 31) _scrollYIncrement();
-            RasterPixel(pixel);
-            RasterSprite();
+            _rasterPixel(pixel);
+            _rasterSprite();
             _addClocks();
             break;
         case 4:
             _tileLoLatch = ChrLoad(_tileAddrLatch + 0);
-            RasterPixel(pixel);
+            _rasterPixel(pixel);
             _addClocks();
             break;
         case 5:
-            RasterPixel(pixel);
+            _rasterPixel(pixel);
             _addClocks();
             break;
         case 6:
             _tileHiLatch = ChrLoad(_tileAddrLatch + 8);
-            RasterPixel(pixel);
+            _rasterPixel(pixel);
             _addClocks();
             break;
         case 7:
-            RasterPixel(7);
-            RasterSprite();
+            _rasterPixel(7);
+            _rasterSprite();
             _addClocks();
 
             raster.nametable = (raster.nametable << 8) | _nametableLatch;
@@ -649,7 +649,7 @@ void Ppu::_verticalBlankingLine() {
         }
         dot++;
         _scanlineIncrement();
-        if (frameToggle) return Cycle();
+        if (frameToggle) return Step();
     }
 
 }
@@ -658,8 +658,4 @@ uint32_t* Ppu::ScreenBuffer() {
     render = false;
 
     return (uint32_t *)(_screenbuffer);
-}
-
-uint8_t* Ppu::ChrRam() {
-    return _ciram;
 }
