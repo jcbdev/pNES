@@ -35,14 +35,6 @@ public:
 
     int32_t clocks;
     bool render;
-    uint16_t dot;
-    int16_t scanline;
-
-    uint16_t vaddr;
-    uint16_t xaddr;
-    uint16_t tileAddr;
-    bool frameToggle;
-    uint8_t buffer;
 
     virtual void Reset() = 0;
     virtual uint8_t CiramRead(uint16_t addr) = 0;
@@ -53,6 +45,7 @@ public:
 
     virtual uint8_t Read(uint16_t addr) = 0;
     virtual void Write(uint16_t addr, uint8_t data) = 0;
+    virtual void WriteDMA(uint8_t value) = 0;
 
     //virtual void RasterPixel(unsigned x) = 0;
     //virtual void RasterSprite() = 0;
@@ -62,6 +55,13 @@ public:
     virtual uint8_t PPUMASK() = 0;
     virtual uint8_t PPUSTATUS() = 0;
     virtual uint8_t OAMADDR() = 0;
+    virtual uint16_t V() = 0;
+    virtual uint16_t X() = 0;
+    virtual uint16_t T() = 0;
+    virtual bool FrameToggle() = 0;
+    virtual uint8_t Buffer() = 0;
+    virtual uint16_t Dot() = 0;
+    virtual int16_t Scanline() = 0;
 
     virtual uint32_t* ScreenBuffer() = 0;
 
@@ -82,6 +82,7 @@ public:
 
     uint8_t Read(uint16_t addr) override;
     void Write(uint16_t addr, uint8_t data) override;
+    void WriteDMA(uint8_t value) override;
 
     //void RasterPixel(unsigned x) override;
     //void RasterSprite() override;
@@ -91,6 +92,13 @@ public:
     uint8_t PPUMASK() override;
     uint8_t PPUSTATUS() override;
     uint8_t OAMADDR() override;
+    uint16_t V() override;
+    uint16_t X() override;
+    uint16_t T() override;
+    bool FrameToggle() override;
+    uint8_t Buffer() override;
+    uint16_t Dot() override;
+    int16_t Scanline() override;
 
     uint32_t* ScreenBuffer() override;
 
@@ -117,6 +125,14 @@ private:
     uint8_t _clamp(unsigned x);
     void _rasterPixel(unsigned x);
     void _rasterSprite();
+
+    uint16_t dot;
+    int16_t scanline;
+    uint16_t vaddr;
+    uint16_t xaddr;
+    uint16_t tileAddr;
+    bool frameToggle;
+    uint8_t buffer;
 
     uint32_t _screenbuffer[256 * 261];
     uint8_t _ciram[2048];

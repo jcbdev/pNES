@@ -128,7 +128,7 @@ uint8_t PpuNew::_readData() {
         bufferedData = value;
         value = buffered;
     } else {
-        bufferedData = _system->cart->ChrRead(v - 0x1000);
+        bufferedData = CgramRead(v - 0x1000);
     }
     // increment address
     if (flagIncrement == 0) {
@@ -141,7 +141,15 @@ uint8_t PpuNew::_readData() {
 
 // $2007: PPUDATA (write)
 void PpuNew::_writeData(uint8_t value) {
-    _system->mem->Write(v, value);
+    //_system->mem->Write(v, value);
+    uint16_t addr = v & 0x3fff;
+    if(addr <= 0x1fff) {
+        _system->cart->ChrWrite(addr, value);
+    } else if(addr <= 0x3eff) {
+        _system->cart->ChrWrite(addr, value);
+    } else if(addr <= 0x3fff) {
+        CgramWrite(addr, value);
+    }
     if (flagIncrement == 0) {
         v += 1;
     } else {
@@ -150,7 +158,7 @@ void PpuNew::_writeData(uint8_t value) {
 }
 
 // $4014: OAMDMA
-void PpuNew::_writeDMA(uint8_t value) {
+void PpuNew::WriteDMA(uint8_t value){
     uint16_t address = (uint16_t)(value) << 8;
     for (int i = 0; i < 256; i++) {
         oamData[oamAddress] = _system->mem->Read(address);
@@ -292,7 +300,7 @@ spr PpuNew::_spritePixel() {
         return { 0, 0 };
     }
     for (int i = 0; i < spriteCount; i++) {
-        int offset = (Cycle - 1) - int(spritePositions[i]);
+        int offset = (cycle - 1) - int(spritePositions[i]);
         if (offset < 0 || offset > 7) {
             continue;
         }
@@ -307,8 +315,8 @@ spr PpuNew::_spritePixel() {
 }
 
 void PpuNew::_renderPixel() {
-    int x = Cycle - 1;
-    int y = ScanLine;
+    int x = cycle - 1;
+    int y = scanline;
     uint8_t background = _backgroundPixel();
     spr spriteData = _spritePixel();
     uint8_t i = spriteData.a;
@@ -340,7 +348,7 @@ void PpuNew::_renderPixel() {
     }
     uint8_t c = Palette[_readPalette((uint16_t)(color))%64];
     //ppu.back.SetRGBA(x, y, c)
-    _screenbuffer[Cycle + (ScanLine * 256)] = c;
+    _screenbuffer[cycle + (scanline * 256)] = c;
 }
 
 uint32_t PpuNew::_fetchSpritePattern(int i, int row) {
@@ -400,7 +408,7 @@ void PpuNew::_evaluateSprites() {
         uint8_t y = oamData[i*4+0];
         uint8_t a = oamData[i*4+2];
         uint8_t x = oamData[i*4+3];
-        int row = ScanLine - int(y);
+        int row = scanline - int(y);
         if (row < 0 || row >= h) {
             continue;
         }
@@ -424,26 +432,26 @@ void PpuNew::tick() {
     if (nmiDelay > 0) {
         nmiDelay--;
         if (nmiDelay == 0 && nmiOutput && nmiOccurred) {
-            _system->cpu->Nmi(true);
+            _system->cpu->Nmi(nmiOutput && nmiOccurred);
         }
     }
 
     if (flagShowBackground != 0 || flagShowSprites != 0) {
-        if (f == 1 && ScanLine == 261 && Cycle == 339) {
-            Cycle = 0;
-            ScanLine = 0;
-            Frame++;
+        if (f == 1 && scanline == 261 && cycle == 339) {
+            cycle = 0;
+            scanline = 0;
+            frame++;
             f ^= 1;
             return;
         }
     }
-    Cycle++;
-    if (Cycle > 340) {
-        Cycle = 0;
-        ScanLine++;
-        if (ScanLine > 261) {
-            ScanLine = 0;
-            Frame++;
+    cycle++;
+    if (cycle > 340) {
+        cycle = 0;
+        scanline++;
+        if (scanline > 261) {
+            scanline = 0;
+            frame++;
             render = true;
             f ^= 1;
         }
@@ -455,12 +463,12 @@ void PpuNew::Step() {
     tick();
 
     bool renderingEnabled = flagShowBackground != 0 || flagShowSprites != 0;
-    bool preLine = ScanLine == 261;
-    bool visibleLine = ScanLine < 240;
+    bool preLine = scanline == 261;
+    bool visibleLine = scanline < 240;
     // bool postLine = ScanLine == 240;
     bool renderLine = preLine || visibleLine;
-    bool preFetchCycle = Cycle >= 321 && Cycle <= 336;
-    bool visibleCycle = Cycle >= 1 && Cycle <= 256;
+    bool preFetchCycle = cycle >= 321 && cycle <= 336;
+    bool visibleCycle = cycle >= 1 && cycle <= 256;
     bool fetchCycle = preFetchCycle || visibleCycle;
 
     // background logic
@@ -470,7 +478,7 @@ void PpuNew::Step() {
         }
         if (renderLine && fetchCycle) {
             tileData <<= 4;
-            switch (Cycle % 8) {
+            switch (cycle % 8) {
                 case 1:
                     _fetchNameTableByte();
                     break;
@@ -488,17 +496,17 @@ void PpuNew::Step() {
                     break;
             }
         }
-        if (preLine && Cycle >= 280 && Cycle <= 304) {
+        if (preLine && cycle >= 280 && cycle <= 304) {
             _copyY();
         }
         if (renderLine) {
-            if (fetchCycle && Cycle%8 == 0) {
+            if (fetchCycle && cycle%8 == 0) {
                 _incrementX();
             }
-            if (Cycle == 256) {
+            if (cycle == 256) {
                 _incrementY();
             }
-            if (Cycle == 257) {
+            if (cycle == 257) {
                 _copyX();
             }
         }
@@ -506,7 +514,7 @@ void PpuNew::Step() {
 
     // sprite logic
     if (renderingEnabled) {
-        if (Cycle == 257) {
+        if (cycle == 257) {
             if (visibleLine) {
                 _evaluateSprites();
             } else {
@@ -516,10 +524,10 @@ void PpuNew::Step() {
     }
 
     // vblank logic
-    if (ScanLine == 241 && Cycle == 1) {
+    if (scanline == 241 && cycle == 1) {
         _setVerticalBlank();
     }
-    if (preLine && Cycle == 1) {
+    if (preLine && cycle == 1) {
         _clearVerticalBlank();
         flagSpriteZeroHit = 0;
         flagSpriteOverflow = 0;
@@ -527,9 +535,9 @@ void PpuNew::Step() {
 }
 
 void PpuNew::Reset() {
-    Cycle = 340;
-    ScanLine = 240;
-    Frame = 0;
+    cycle = 340;
+    scanline = 240;
+    frame = 0;
     _writeControl(0);
     _writeMask(0);
     _writeOAMAddress(0);
@@ -560,7 +568,31 @@ uint8_t PpuNew::Read(uint16_t addr) {
 }
 
 void PpuNew::Write(uint16_t addr, uint8_t data) {
-
+    switch(addr & 7) {
+        case 0: //PPUCTRL
+            _writeControl(data);
+            return;
+        case 1: //PPUMASK
+            _writeMask(data);
+            return;
+        case 2: //PPUSTATUS
+            return;
+        case 3: //OAMADDR
+            _writeOAMAddress(data);
+            return;
+        case 4: //OAMDATA
+            _writeOAMData(data);
+            return;
+        case 5: //PPUSCROLL
+            _writeScroll(data);
+            return;
+        case 6: //PPUADDR
+            _writeAddress(data);
+            return;
+        case 7: //PPUDATA
+            _writeData(data);
+            return;
+    }
 }
 
 
@@ -598,6 +630,34 @@ uint8_t PpuNew::PPUSTATUS() {
 
 uint8_t PpuNew::OAMADDR() {
     return oamAddress;
+}
+
+uint16_t PpuNew::V() {
+    return v;
+}
+
+uint16_t PpuNew::X() {
+    return x;
+}
+
+uint16_t PpuNew::T() {
+    return t;
+}
+
+bool PpuNew::FrameToggle() {
+    return f;
+}
+
+uint8_t PpuNew::Buffer() {
+    return bufferedData;
+}
+
+uint16_t PpuNew::Dot() {
+    return cycle;
+}
+
+int16_t PpuNew::Scanline() {
+    return scanline;
 }
 
 uint32_t* PpuNew::ScreenBuffer() {

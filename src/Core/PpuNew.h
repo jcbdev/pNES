@@ -25,6 +25,7 @@ public:
 
     uint8_t Read(uint16_t addr) override;
     void Write(uint16_t addr, uint8_t data) override;
+    void WriteDMA(uint8_t value) override;
 
     void Step() override;
 
@@ -32,6 +33,13 @@ public:
     uint8_t PPUMASK() override;
     uint8_t PPUSTATUS() override;
     uint8_t OAMADDR() override;
+    uint16_t V() override;
+    uint16_t X() override;
+    uint16_t T() override;
+    bool FrameToggle() override;
+    uint8_t Buffer() override;
+    uint16_t Dot() override;
+    int16_t Scanline() override;
 
     uint32_t* ScreenBuffer() override;
 
@@ -48,7 +56,6 @@ private:
     void _writeAddress(uint8_t value);
     uint8_t _readData();
     void _writeData(uint8_t value);
-    void _writeDMA(uint8_t value);
     void _incrementX();
     void _incrementY();
     void _copyX();
@@ -71,9 +78,9 @@ private:
     void tick();
 
 
-    int Cycle;    // 0-340
-    int ScanLine;    // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
-    uint64_t Frame; // frame counter
+    int cycle;    // 0-340
+    int scanline;    // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
+    uint64_t frame; // frame counter
 
     // storage variables
     uint8_t paletteData[32];

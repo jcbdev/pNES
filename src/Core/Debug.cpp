@@ -37,9 +37,9 @@ IDebug::IDebug(ISystem *system){
 
 Debug::Debug(ISystem *system) : IDebug::IDebug(system) {
     //breakpoints.push_back(0x814d);
-    breakpoints.push_back(0x8150);
-    step = true;
-    pause = true;
+    //breakpoints.push_back(0x8150);
+    step = false;
+    pause = false;
 }
 
 std::string Debug::_decode(int pc, int* increment) {
@@ -259,17 +259,17 @@ void Debug::_setStatus() {
 
     output << "Clocks: " << hex8 << (int)(_system->totalClocks);
     setvalue(status.clock);
-    output << "Scanline: " << hex2 << (int)(_system->ppu->scanline);
+    output << "Scanline: " << hex2 << (int)(_system->ppu->Scanline());
     setvalue(status.scanline);
-    output << "Dot: " << hex2 << (int)_system->ppu->dot;
+    output << "Dot: " << hex2 << (int)_system->ppu->Dot();
     setvalue(status.dot);
-    output << "XOffset: " << hex2 << (int)_system->ppu->xaddr;
+    output << "XOffset: " << hex2 << (int)_system->ppu->X();
     setvalue(status.xaddr);
-    output << "VAddr: " << hex4 << (int)_system->ppu->vaddr;
+    output << "VAddr: " << hex4 << (int)_system->ppu->V();
     setvalue(status.vaddr);
-    output << "TAddr: " << hex4 << (int)_system->ppu->tileAddr;
+    output << "TAddr: " << hex4 << (int)_system->ppu->T();
     setvalue(status.taddr);
-    output << "Buffer: " << hex2 << (int)_system->ppu->buffer;
+    output << "Buffer: " << hex2 << (int)_system->ppu->Buffer();
     setvalue(status.buffer)
     output << "PPU0: " << hex2 << (int)_system->ppu->PPUSTATUS();
     setvalue(status.PPU0)
@@ -279,7 +279,7 @@ void Debug::_setStatus() {
     setvalue(status.PPU2)
     output << "PPU3: " << hex2 << (int)_system->ppu->OAMADDR();
     setvalue(status.PPU3)
-    output << "V-Toggle: " << hex2 << (int)_system->ppu->frameToggle;
+    output << "V-Toggle: " << hex2 << (int)_system->ppu->FrameToggle();
     setvalue(status.frame)
 }
 

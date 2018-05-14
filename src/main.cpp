@@ -226,12 +226,13 @@ int main() {
     Cart *cart = new Nrom(system);
     CpuMemory *memory = new CpuMemory(system);
     Cpu *cpu = new Cpu(system);
-    PpuNew *ppu = new PpuNew(system);
+    //PpuNew *ppu = new PpuNew(system);
+    Ppu *ppu = new Ppu(system);
     Debug *debug = new Debug(system);
 
     system->Configure(cpu, memory, cart, ppu, debug, logger);
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
-    cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
+    cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
     system->Reset();
 
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) != 0) {
@@ -240,8 +241,8 @@ int main() {
     }
 
     TTF_Init();
-    //Sans = TTF_OpenFont("/home/jimbo/CLionProjects/pNES/Monospace.ttf", 12); //this opens a font style and sets a size
-    Sans = TTF_OpenFont("/Users/james/ClionProjects/LittlePNes/Monospace.ttf", 12); //this opens a font style and sets a size
+    Sans = TTF_OpenFont("/home/jimbo/CLionProjects/pNES/Monospace.ttf", 12); //this opens a font style and sets a size
+    //Sans = TTF_OpenFont("/Users/james/ClionProjects/LittlePNes/Monospace.ttf", 12); //this opens a font style and sets a size
 
     window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 512, 480, SDL_WINDOW_OPENGL);
     debugWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, SDL_WINDOW_OPENGL);
@@ -343,7 +344,7 @@ int main() {
             }
 
             if (ppu->clocks <= 0) ppu->Step();
-            if (ppu->dot == 340 && ppu->scanline == 0xF0) system->totalClocks = 0;
+            if (ppu->Dot() == 340 && ppu->Scanline() == 0xF0) system->totalClocks = 0;
 
             if (ppu->render) {
                 render(ppu->ScreenBuffer());

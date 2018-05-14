@@ -5,6 +5,7 @@
 #include <cstring>
 #include "Ppu.h"
 #include "Cpu.h"
+#include "Memory.h"
 #include "../Rom/Cart.h"
 #include "../Helpers/Logger.h"
 
@@ -272,6 +273,14 @@ void Ppu::Write(uint16_t addr, uint8_t data){
     }
 }
 
+void Ppu::WriteDMA(uint8_t value) {
+        for (uint16_t n = 0; n < 256; n++) {
+            uint8_t data = _system->mem->Read(((uint16_t)value << 8) + n);
+            _addClocks();
+            _system->mem->Write(0x2004, data);
+        }
+}
+
 uint8_t Ppu::PPUCTRL() {
     uint8_t val;
     val = _nmiEnable << 7;
@@ -306,6 +315,34 @@ uint8_t Ppu::PPUSTATUS() {
 
 uint8_t Ppu::OAMADDR() {
     return _oamAddr;
+}
+
+uint16_t Ppu::V() {
+    return vaddr;
+}
+
+uint16_t Ppu::X() {
+    return xaddr;
+}
+
+uint16_t Ppu::T() {
+    return tileAddr;
+}
+
+bool Ppu::FrameToggle() {
+    return frameToggle;
+}
+
+uint8_t Ppu::Buffer() {
+    return buffer;
+}
+
+uint16_t Ppu::Dot() {
+    return dot;
+}
+
+int16_t Ppu::Scanline() {
+    return scanline;
 }
 
 uint8_t Ppu::ChrLoad(uint16_t addr){

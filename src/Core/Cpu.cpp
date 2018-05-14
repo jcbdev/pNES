@@ -32,11 +32,8 @@ uint8_t Cpu::_read(uint16_t addr) {
     uint8_t data = _system->mem->Read(addr);
     if (_dmaPending){
         _dmaPending = false;
-        for (uint16_t n = 0; n < 256; n++) {
-            uint8_t data = _read(((uint16_t)_dmaPage << 8) + n);
-            _addClocks();
-            _system->mem->Write(0x2004, data);
-        }
+
+        _system->ppu->WriteDMA(_dmaPage);
     }
     return data;
 }
@@ -293,7 +290,7 @@ void Cpu::_printClockDrift(uint8_t opcode) {
 #undef d
 
     if (drift > 7)
-        drift = drift - 512;
+        drift = drift - 171;
     if (_paged)
         drift--;
     if (drift != 0)
