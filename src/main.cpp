@@ -90,6 +90,7 @@ void render(uint32_t* screenBuffer) {
 //}
 
 void renderText(std::string text, int x, int y, SDL_Color color){
+    if (text == "") return;
     SDL_Surface* surfaceMessage = TTF_RenderText_Blended(Sans, text.c_str(), color);
 
     SDL_Texture *message = SDL_CreateTextureFromSurface(debugRenderer, surfaceMessage);
@@ -110,7 +111,7 @@ void renderText(std::string text, int x, int y, SDL_Color color){
     SDL_FreeSurface(surfaceMessage);
 }
 
-void renderAssembly(Disassembly d, int line, int pc, int cursorPosition, bool isBrk, int y) {
+void renderAssembly(Disassembly d, int line, int pc, int cursorPosition, bool isBrk, int y, int xoffset = 0) {
     SDL_Color color = {255, 255, 255};
     std::stringstream linetext;
     if (line == pc) {
@@ -130,9 +131,9 @@ void renderAssembly(Disassembly d, int line, int pc, int cursorPosition, bool is
     }
 
     linetext << d.address << ":  ";
-    renderText(linetext.str(), 0, y, color);
-    renderText(d.bytes, 50, y, color);
-    renderText(d.assembly, 150, y, color);
+    renderText(linetext.str(), 0 + xoffset, y, color);
+    renderText(d.bytes, 70 + xoffset, y, color);
+    renderText(d.assembly, 170 + xoffset, y, color);
 
 }
 
@@ -174,26 +175,50 @@ void debugRender(IDebug *debug, ICpu *cpu, bool isEditing, std::string gotoAddre
     }
 
     //Output various cpu status data
-    renderText(debug->status.pc, 250, 1, White);
-    renderText(debug->status.a, 250, 15, White);
-    renderText(debug->status.x, 250, 29, White);
-    renderText(debug->status.y, 250, 43, White);
-    renderText(debug->status.sp, 250, 57, White);
-    renderText(debug->status.p, 250, 71, White);
-    renderText(debug->status.clock, 250, 85, White);
+    renderText(debug->status.pc, 270, 1, White);
+    renderText(debug->status.a, 270, 15, White);
+    renderText(debug->status.x, 270, 29, White);
+    renderText(debug->status.y, 270, 43, White);
+    renderText(debug->status.sp, 270, 57, White);
+    renderText(debug->status.p, 270, 71, White);
+    renderText(debug->status.clock, 270, 85, White);
 
     //Output various PPU status data
-    renderText(debug->status.PPU0, 400, 1, White);
-    renderText(debug->status.PPU1, 400, 15, White);
-    renderText(debug->status.PPU2, 400, 29, White);
-    renderText(debug->status.PPU3, 400, 43, White);
-    renderText(debug->status.xaddr, 400, 57, White);
-    renderText(debug->status.vaddr, 400, 71, White);
-    renderText(debug->status.taddr, 400, 85, White);
-    renderText(debug->status.buffer, 400, 104, White);
-    renderText(debug->status.frame, 400, 118, White);
-    renderText(debug->status.scanline, 400, 132, White);
-    renderText(debug->status.dot, 400, 146, White);
+    renderText(debug->status.PPU0, 420, 1, White);
+    renderText(debug->status.PPU1, 420, 15, White);
+    renderText(debug->status.PPU2, 420, 29, White);
+    renderText(debug->status.PPU3, 420, 43, White);
+    renderText(debug->status.xaddr, 420, 57, White);
+    renderText(debug->status.vaddr, 420, 71, White);
+    renderText(debug->status.taddr, 420, 85, White);
+    renderText(debug->status.buffer, 420, 104, White);
+    renderText(debug->status.frame, 420, 118, White);
+    renderText(debug->status.scanline, 420, 132, White);
+    renderText(debug->status.dot, 420, 146, White);
+
+    //output trace
+    auto traceIterator = debug->trace.rbegin();
+    int instructions = 0;
+    ypos = 750;
+    while (traceIterator != debug->trace.rend() && instructions < 55){
+        instructions++;
+        ypos -= 14;
+
+        iterator = debug->disassembly.find(*traceIterator);
+        if (iterator == debug->disassembly.end()){
+            if (*traceIterator > 0x8000) {
+                int opcodeSize = 0;
+                debug->Decode(*traceIterator, &opcodeSize, true);
+                iterator = debug->disassembly.find(*traceIterator);
+                renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
+                std::cout << "Unassembled missing instruction at: " << *traceIterator << std::endl;
+            }
+
+        }
+        else
+            renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
+        traceIterator++;
+    }
 
     if (isEditing) {
         std::stringstream addr;
@@ -226,8 +251,8 @@ int main() {
     Cart *cart = new Nrom(system);
     CpuMemory *memory = new CpuMemory(system);
     Cpu *cpu = new Cpu(system);
-    //PpuNew *ppu = new PpuNew(system);
-    Ppu *ppu = new Ppu(system);
+    PpuNew *ppu = new PpuNew(system);
+    //Ppu *ppu = new Ppu(system);
     Debug *debug = new Debug(system);
 
     system->Configure(cpu, memory, cart, ppu, debug, logger);
@@ -251,7 +276,7 @@ int main() {
 
     renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
     debugRenderer = SDL_CreateRenderer(debugWindow, 0, SDL_RENDERER_ACCELERATED);
-    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 256, 240);
+    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 261);
     //debugBuffer = SDL_CreateTexture(debugRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 512, 512);
 
     SDL_AddEventWatch(watch, NULL);
@@ -327,6 +352,7 @@ int main() {
 
             if (cpu->clocks <= 0) {
                 debug->Refresh();
+                //debugRender(debug, cpu, isEditing, gotoAddress);
                 if (debug->pause) {
                     cpu->clocks++;
                     ppu->clocks++;

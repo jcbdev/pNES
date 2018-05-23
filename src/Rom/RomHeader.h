@@ -37,8 +37,8 @@ struct RomHeader {
         };
     };
 
-    bool Mirroring(){
-        return (Flags6 & 0x0000000F) == 1;
+    uint8_t MirrorMode(){
+        return (Flags6 & 1) | ((Flags6 >> 3) & 1)<<1;
     }
 
     bool BatteryBackedPRGRam() {
@@ -47,10 +47,6 @@ struct RomHeader {
 
     bool Trainer() {
         return (Flags6 & 0x00000F00) == 1;
-    }
-
-    bool FourScreenMode() {
-        return (Flags6 & 0x0000F000) == 1;
     }
 
     uint8_t LowerMapper() {

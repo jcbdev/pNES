@@ -3,7 +3,7 @@
 //
 
 #include "Nrom.h"
-#include "../Core/Ppu.h"
+#include "../Helpers/Logger.h"
 
 Nrom::Nrom(ISystem *system) : Cart(system) {
 
@@ -13,30 +13,26 @@ Nrom::~Nrom() {
 
 }
 
-uint8_t Nrom::PrgRead(uint16_t addr) {
-//    if (addr >= 0xC000) return prgData[UpperPrgBank][(uint16_t)(addr - 0xC000)];
-//    else if (addr > 0x8000) return prgData[LowerPrgBank][(uint16_t)(addr - 0x8000)];
-    if (addr >= 0xC000) return romData[(uint32_t)(16 + (UpperPrgBank * 0x4000) + (addr - 0xC000))];
-    else if (addr >= 0x8000) return romData[(uint32_t)(16 + (LowerPrgBank * 0x4000) + (addr - 0x8000))];
-    else return 0;
+uint8_t Nrom::Read(uint16_t addr) {
+    if (addr < 0x2000)
+        return Chr[ChrBank][addr];
+    if (addr >= 0xC000)
+        return Prg[UpperPrgBank][addr-0xC000];
+    if (addr >= 0x8000)
+        return Prg[LowerPrgBank][addr-0x8000];
+    if (addr >= 0x6000)
+        return Sram[addr-0x6000];
+    _system->logger->Log("Nrom Read: Invalid Cartridge address");
+    return 0;
 }
 
-void Nrom::PrgWrite(uint16_t addr, uint8_t data) {}
-
-uint8_t Nrom::ChrRead(uint16_t addr) {
-    if(addr & 0x2000) {
-        if(Header.Mirroring() == 0) addr = ((addr & 0x0800) >> 1) | (addr & 0x03ff);
-        return _system->ppu->CiramRead(addr & 0x07ff);
-    }
-    if(Header.ChrRamSize) return romData[16 + (Header.PrgRomSize * 0x4000) + addr];
-    return romData[16 + (Header.PrgRomSize * 0x4000) + addr];
-}
-
-void Nrom::ChrWrite(uint16_t addr, uint8_t data) {
-    if(addr & 0x2000) {
-        if(Header.Mirroring() == 0) addr = ((addr & 0x0800) >> 1) | (addr & 0x03ff);
-        return _system->ppu->CiramWrite(addr & 0x07ff, data);
-    }
-    if(Header.ChrRamSize) romData[16 + (Header.PrgRomSize * 0x4000) + addr] = data;
+void Nrom::Write(uint16_t addr, uint8_t data) {
+    if (addr < 0x2000)
+        Chr[ChrBank][addr] = data;
+    else if (addr >= 0x8000)
+        UpperPrgBank = data % PrgSize;
+    else if (addr >= 0x6000)
+        Sram[addr-0x6000] = data;
+    else _system->logger->Log("NRom Write: Invalid Cartridge address");
 }
 

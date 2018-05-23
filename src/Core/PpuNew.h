@@ -17,14 +17,11 @@ public:
     explicit PpuNew(ISystem *system);
 
     void Reset() override;
-    uint8_t CiramRead(uint16_t addr) override;
-    void CiramWrite(uint16_t addr, uint8_t data) override;
-    uint8_t CgramRead(uint16_t addr) override;
-    void CgramWrite(uint16_t addr, uint8_t data) override;
-    uint8_t ChrLoad(uint16_t addr) override;
 
     uint8_t Read(uint16_t addr) override;
     void Write(uint16_t addr, uint8_t data) override;
+    uint8_t ReadRegister(uint16_t addr) override;
+    void WriteRegister(uint16_t addr, uint8_t data) override;
     void WriteDMA(uint8_t value) override;
 
     void Step() override;
@@ -74,6 +71,7 @@ private:
     void _renderPixel();
     uint32_t _fetchSpritePattern(int i, int row);
     void _evaluateSprites();
+    uint16_t _mirrorAddress(uint16_t addr);
 
     void tick();
 
@@ -145,6 +143,14 @@ private:
     uint8_t bufferedData; // for buffered reads
 
     uint32_t _screenbuffer[256 * 261];
+
+    const uint8_t Mirror[5][4] = {
+            {0, 0, 1, 1},
+            {0, 1, 0, 1},
+            {0, 0, 0, 0},
+            {1, 1, 1, 1},
+            {0, 1, 2, 3}
+    };
 
     const uint32_t Palette[64] = {
             0x7c7c7c,

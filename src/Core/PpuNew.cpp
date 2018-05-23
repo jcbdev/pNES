@@ -6,6 +6,7 @@
 #include "Memory.h"
 #include "Cpu.h"
 #include "../Rom/Cart.h"
+#include "../Helpers/Logger.h"
 
 PpuNew::PpuNew(ISystem *system) : IPpu(system) {
 
@@ -25,6 +26,48 @@ void PpuNew::_writePalette(uint16_t address, uint8_t value) {
     paletteData[address] = value;
 }
 
+uint8_t PpuNew::ReadRegister(uint16_t addr) {
+    switch (addr){
+        case 0x2002:
+            return _readStatus();
+        case 0x2004:
+            return _readOAMData();
+        case 0x2007:
+            return _readData();
+        default:
+            return 0;
+    }
+}
+
+void PpuNew::WriteRegister(uint16_t addr, uint8_t data) {
+    reg = data;
+    switch (addr){
+        case 0x2000:
+            _writeControl(data);
+            break;
+        case 0x2001:
+            _writeMask(data);
+            break;
+        case 0x2003:
+            _writeOAMAddress(data);
+            break;
+        case 0x2004:
+            _writeOAMData(data);
+            break;
+        case 0x2005:
+            _writeScroll(data);
+            break;
+        case 0x2006:
+            _writeAddress(data);
+            break;
+        case 0x2007:
+            _writeData(data);
+            break;
+        case 0x4014:
+            WriteDMA(data);
+            break;
+    }
+}
 
 // $2000: PPUCTRL
 void PpuNew::_writeControl(uint8_t value) {
@@ -121,14 +164,14 @@ void PpuNew::_writeAddress(uint8_t value) {
 
 // $2007: PPUDATA (read)
 uint8_t PpuNew::_readData() {
-    uint8_t value = _system->cart->ChrRead(v);
+    uint8_t value = _system->ppu->Read(v);
     // emulate buffered reads
     if (v%0x4000 < 0x3F00) {
         uint8_t buffered = bufferedData;
         bufferedData = value;
         value = buffered;
     } else {
-        bufferedData = CgramRead(v - 0x1000);
+        bufferedData = _system->ppu->Read(v - 0x1000);
     }
     // increment address
     if (flagIncrement == 0) {
@@ -142,14 +185,7 @@ uint8_t PpuNew::_readData() {
 // $2007: PPUDATA (write)
 void PpuNew::_writeData(uint8_t value) {
     //_system->mem->Write(v, value);
-    uint16_t addr = v & 0x3fff;
-    if(addr <= 0x1fff) {
-        _system->cart->ChrWrite(addr, value);
-    } else if(addr <= 0x3eff) {
-        _system->cart->ChrWrite(addr, value);
-    } else if(addr <= 0x3fff) {
-        CgramWrite(addr, value);
-    }
+    _system->ppu->Write(v, value);
     if (flagIncrement == 0) {
         v += 1;
     } else {
@@ -231,7 +267,7 @@ void PpuNew::_nmiChange() {
     if (nmi && !nmiPrevious) {
         // TODO: this fixes some games but the delay shouldn't have to be so
         // long, so the timings are off somewhere
-        nmiDelay = 15;
+        nmiDelay = 0;
     }
     nmiPrevious = nmi;
 }
@@ -346,9 +382,9 @@ void PpuNew::_renderPixel() {
             color = background;
         }
     }
-    uint8_t c = Palette[_readPalette((uint16_t)(color))%64];
+    uint32_t c = Palette[_readPalette((uint16_t)(color))%64];
     //ppu.back.SetRGBA(x, y, c)
-    _screenbuffer[cycle + (scanline * 256)] = c;
+    _screenbuffer[x + (y * 256)] = 0xFF000000 + c;
 }
 
 uint32_t PpuNew::_fetchSpritePattern(int i, int row) {
@@ -429,12 +465,12 @@ void PpuNew::_evaluateSprites() {
 
 void PpuNew::tick() {
     clocks++;
-    if (nmiDelay > 0) {
-        nmiDelay--;
-        if (nmiDelay == 0 && nmiOutput && nmiOccurred) {
-            _system->cpu->Nmi(nmiOutput && nmiOccurred);
+    //if (nmiDelay > 0) {
+    //    nmiDelay--;
+        if (nmiDelay == 0 && nmiOutput) {
+            _system->cpu->Nmi(nmiOccurred);
         }
-    }
+    //}
 
     if (flagShowBackground != 0 || flagShowSprites != 0) {
         if (f == 1 && scanline == 261 && cycle == 339) {
@@ -543,62 +579,40 @@ void PpuNew::Reset() {
     _writeOAMAddress(0);
 }
 
-uint8_t PpuNew::CiramRead(uint16_t addr){
-    return nameTableData[addr & 0x07ff];
-}
+uint8_t PpuNew::Read(uint16_t addr) {
+    uint16_t address = addr % 0x4000;
 
-void PpuNew::CiramWrite(uint16_t addr, uint8_t data){
-    nameTableData[addr & 0x07ff] = data;
-}
-
-uint8_t PpuNew::CgramRead(uint16_t addr) {
-    return _readPalette(addr);
-}
-
-void PpuNew::CgramWrite(uint16_t addr, uint8_t data){
-    _writePalette(addr, data);
-}
-
-uint8_t PpuNew::ChrLoad(uint16_t addr) {
+    if (address < 0x2000)
+        return _system->cart->Read(address);
+    if (address < 0x3F00)
+        return nameTableData[_mirrorAddress(address)%2048];
+    if (address < 0x4000)
+        return _readPalette(address % 32);
+    _system->logger->Log("Ppu Read: Unknown address");
     return 0;
 }
 
-uint8_t PpuNew::Read(uint16_t addr) {
-    return _readData();
-}
-
 void PpuNew::Write(uint16_t addr, uint8_t data) {
-    switch(addr & 7) {
-        case 0: //PPUCTRL
-            _writeControl(data);
-            return;
-        case 1: //PPUMASK
-            _writeMask(data);
-            return;
-        case 2: //PPUSTATUS
-            return;
-        case 3: //OAMADDR
-            _writeOAMAddress(data);
-            return;
-        case 4: //OAMDATA
-            _writeOAMData(data);
-            return;
-        case 5: //PPUSCROLL
-            _writeScroll(data);
-            return;
-        case 6: //PPUADDR
-            _writeAddress(data);
-            return;
-        case 7: //PPUDATA
-            _writeData(data);
-            return;
-    }
+    uint16_t address = addr % 0x4000;
+    if (address < 0x2000)
+        _system->cart->Write(address, data);
+    else if (address < 0x3F00)
+        nameTableData[_mirrorAddress(address)%2048] = data;
+    else if (address < 0x4000)
+        _writePalette(address%32, data);
+    else _system->logger->Log("Ppu Write: Unknown address");
 }
 
+uint16_t PpuNew::_mirrorAddress(uint16_t addr) {
+    uint16_t address = (addr - 0x2000) % 0x1000;
+    auto table = address / 0x0400;
+    auto offset = address % 0x0400;
+    return 0x2000 + Mirror[_system->cart->Header.MirrorMode()][table]*0x0400 + offset;
+}
 
 uint8_t PpuNew::PPUCTRL() {
     uint8_t val;
-    val = (nmiDelay > 0) << 7;
+    val = nmiOutput << 7;
     val |= flagMasterSlave << 6;
     val |= flagSpriteSize << 5;
     val |= (flagBackgroundTable == 0x1000 ? 1 : 0) << 4;

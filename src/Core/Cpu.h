@@ -147,9 +147,6 @@ private:
     bool _dmaPending;
     uint8_t _dmaPage;
     bool _paged;
-
-    int _pcCount;
-    bool _isOpCode;
 };
 
 #endif //LITTLEPNES_CPU_H

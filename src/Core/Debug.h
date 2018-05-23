@@ -9,7 +9,10 @@
 #include <map>
 #include <sstream>
 #include <list>
+#include <vector>
 #include "System.h"
+
+template class std::vector<uint16_t>;
 
 struct Disassembly {
     std::string address;
@@ -45,6 +48,8 @@ public:
 
     Status status;
     std::map<uint16_t, Disassembly> disassembly;
+    std::vector<uint16_t> trace;
+    virtual std::string Decode(int pc, int* increment, bool dynamic) = 0;
     virtual void Refresh() = 0;
     virtual void GoNext() = 0;
     virtual void GoPrev() = 0;
@@ -63,13 +68,14 @@ class Debug : public IDebug {
 public:
     explicit Debug(ISystem* system);
 
+    std::string Decode(int pc, int* increment, bool dynamic) override;
     void Refresh() override;
     void GoNext() override;
     void GoPrev() override;
     void AddBrk() override;
     bool isBrk(int line) override;
 private:
-    std::string _decode(int pc, int* increment);
+
     void _preDisassemble();
     void _setStatus();
     bool _disassembled = false;

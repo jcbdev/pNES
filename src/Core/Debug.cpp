@@ -16,6 +16,7 @@
 #define op(byte, prefix, mode, length) \
     case byte: \
         disasm = Disassembly(); \
+        if (dynamic) output << "!"; \
         output << hex4 << (int)pc; \
         setvalue(disasm.address); \
         length(); \
@@ -38,11 +39,19 @@ IDebug::IDebug(ISystem *system){
 Debug::Debug(ISystem *system) : IDebug::IDebug(system) {
     //breakpoints.push_back(0x814d);
     //breakpoints.push_back(0x8150);
+    //breakpoints.push_back(0x9077);
+    //breakpoints.push_back(0xFFF7);
+    //breakpoints.push_back(0xFFF6);
+    //breakpoints.push_back(0xFFF5);
+    //breakpoints.push_back(0x8179);
+    //breakpoints.push_back(0xFFF3);
+    //breakpoints.push_back(0x0);
+    //breakpoints.push_back(0x90cc);
     step = false;
     pause = false;
 }
 
-std::string Debug::_decode(int pc, int* increment) {
+std::string Debug::Decode(int pc, int* increment, bool dynamic) {
     std::stringstream output;
     Disassembly disasm;
 
@@ -65,7 +74,7 @@ std::string Debug::_decode(int pc, int* increment) {
 
     uint8_t opcode = _system->mem->Read(pc);
     switch(opcode) {
-        op(0x00, brk, imm, two);
+        op(0x00, brk, imm, one);
         op(0x01, ora, izx, two);
         op(0x05, ora, zpg, two);
         op(0x06, asl, zpg, two);
@@ -232,7 +241,7 @@ std::string Debug::_decode(int pc, int* increment) {
             break;
     }
 
-    return output.str();
+    return disasm.address + "  " + disasm.bytes + "  " + disasm.assembly;
 }
 
 void Debug::_setStatus() {
@@ -285,15 +294,24 @@ void Debug::_setStatus() {
 
 void Debug::Refresh() {
     if (!_disassembled) {
+        Disassembly disasm;
+        disasm.address = ".....";
+        disasm.assembly = "<Interrupt>";
+        disasm.bytes = "..";
+        disassembly[1] = disasm;
         _preDisassemble();
     }
     _setStatus();
     if (isBrk(_system->cpu->pc) && !step && !pause) {
         pause = true;
         cursorPosition = _system->cpu->pc;
+        if (trace.size() == 0 || trace.back() != _system->cpu->pc)
+            trace.push_back(_system->cpu->pc);
     }
     if (!pause || (step && pause)) {
         cursorPosition = _system->cpu->pc;
+        if (trace.size() == 0 || trace.back() != _system->cpu->pc)
+            trace.push_back(_system->cpu->pc);
     }
 }
 
@@ -350,7 +368,7 @@ void Debug::_preDisassemble() {
     int curPc = 0x8000;
     int opcodeSize = 0;
     while (curPc<=0xFFFF) {
-        _decode(curPc, &opcodeSize);
+        Decode(curPc, &opcodeSize, false);
         curPc += opcodeSize;
     }
     _disassembled = true;

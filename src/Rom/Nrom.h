@@ -9,10 +9,8 @@
 
 class Nrom : public Cart {
 public:
-    uint8_t PrgRead(uint16_t addr);
-    void PrgWrite(uint16_t addr, uint8_t data);
-    uint8_t ChrRead(uint16_t addr);
-    void ChrWrite(uint16_t addr, uint8_t data);
+    uint8_t Read(uint16_t addr) override;
+    void Write(uint16_t addr, uint8_t data) override;
 
     Nrom(ISystem *system);
     ~Nrom();

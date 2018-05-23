@@ -6,6 +6,7 @@
 #include "Memory.h"
 #include "Ppu.h"
 #include "../Helpers/Logger.h"
+#include "Debug.h"
 
 ICpu::ICpu(ISystem* system) {
     _system = system;
@@ -43,6 +44,7 @@ void Cpu::_write(uint16_t addr, uint8_t data) {
     if (addr == 0x4014){
         _dmaPending = true;
         _dmaPage = data;
+        //return?
     }
 
     _system->mem->Write(addr, data);
@@ -50,7 +52,8 @@ void Cpu::_write(uint16_t addr, uint8_t data) {
 
 void Cpu::_writeSp(uint8_t data){
     _addClocks();
-    _write(0x0100 | s--, data);
+    _system->logger->Log("WriteSP: " + std::to_string(data) + "    pc:" + std::to_string(pc) + "    s:" + std::to_string(s));
+    _write((uint16_t)0x0100 | s--, data);
 }
 
 uint8_t Cpu::_readZp(uint8_t zp){
@@ -64,7 +67,9 @@ void Cpu::_writeZp(uint8_t zp, uint8_t data) {
 }
 
 uint8_t Cpu::_readSp(){
-    return _read(0x0100 | ++s);
+    uint16_t val = _read(0x0100 | ++s);
+    _system->logger->Log("ReadSP: " + std::to_string(val) + "    pc:" + std::to_string(pc) + "    s:" + std::to_string(s-1));
+    return val;
 }
 
 void Cpu::Reset() {
@@ -305,14 +310,12 @@ void Cpu::_printClockDrift(uint8_t opcode) {
 
 void Cpu::Cycle() {
     _paged = false;
-    //_system->logger->Log(currentline);
-    if (pc == 0x81C6 || pc == 0x814D) {
-        _pcCount++;
-        _isOpCode = true;
-    }
-    else _isOpCode = false;
+
+    int size;
+    _system->logger->Log(_system->debug->Decode(pc, &size, false));
     uint8_t opcode = _readPcAndInc();
     //_system->logger->Log(std::to_string(opcode));
+
 
     switch(opcode){
         //ADC
@@ -1170,6 +1173,8 @@ bool Cpu::Interrupt(){
     p.d = 0;
     _testInterrupt();
     _addr16.h = _read(vector++);
+    _system->debug->trace.push_back(1);
+    _system->logger->Log("<<interrupt>>:  " + std::to_string(vector));
     pc = _addr16.w;
     return true;
 }
@@ -1183,6 +1188,7 @@ void Cpu::Irq(bool line) {
 }
 
 void Cpu::Nmi(bool line) {
-    if(!_nmi && line) _nmiPending = true;
+    if(!_nmi && line)
+        _nmiPending = true;
     _nmi = line;
 }
