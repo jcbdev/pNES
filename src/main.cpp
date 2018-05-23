@@ -276,7 +276,7 @@ int main() {
 
     renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
     debugRenderer = SDL_CreateRenderer(debugWindow, 0, SDL_RENDERER_ACCELERATED);
-    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 261);
+    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 256, 261);
     //debugBuffer = SDL_CreateTexture(debugRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 512, 512);
 
     SDL_AddEventWatch(watch, NULL);
@@ -351,7 +351,7 @@ int main() {
             ppu->clocks--;
 
             if (cpu->clocks <= 0) {
-                debug->Refresh();
+                //debug->Refresh();
                 //debugRender(debug, cpu, isEditing, gotoAddress);
                 if (debug->pause) {
                     cpu->clocks++;
@@ -374,12 +374,12 @@ int main() {
 
             if (ppu->render) {
                 render(ppu->ScreenBuffer());
-                debugRender(debug, cpu, isEditing, gotoAddress);
+                //debugRender(debug, cpu, isEditing, gotoAddress);
             }
         }
         else{
-            debug->Refresh();
-            debugRender(debug, cpu, isEditing, gotoAddress);
+            //debug->Refresh();
+            //debugRender(debug, cpu, isEditing, gotoAddress);
         }
     }
 

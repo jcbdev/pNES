@@ -52,7 +52,7 @@ void Cpu::_write(uint16_t addr, uint8_t data) {
 
 void Cpu::_writeSp(uint8_t data){
     _addClocks();
-    _system->logger->Log("WriteSP: " + std::to_string(data) + "    pc:" + std::to_string(pc) + "    s:" + std::to_string(s));
+    //_system->logger->Log("WriteSP: " + std::to_string(data) + "    pc:" + std::to_string(pc) + "    s:" + std::to_string(s));
     _write((uint16_t)0x0100 | s--, data);
 }
 
@@ -68,7 +68,7 @@ void Cpu::_writeZp(uint8_t zp, uint8_t data) {
 
 uint8_t Cpu::_readSp(){
     uint16_t val = _read(0x0100 | ++s);
-    _system->logger->Log("ReadSP: " + std::to_string(val) + "    pc:" + std::to_string(pc) + "    s:" + std::to_string(s-1));
+    //_system->logger->Log("ReadSP: " + std::to_string(val) + "    pc:" + std::to_string(pc) + "    s:" + std::to_string(s-1));
     return val;
 }
 
@@ -312,7 +312,7 @@ void Cpu::Cycle() {
     _paged = false;
 
     int size;
-    _system->logger->Log(_system->debug->Decode(pc, &size, false));
+    //_system->logger->Log(_system->debug->Decode(pc, &size, false));
     uint8_t opcode = _readPcAndInc();
     //_system->logger->Log(std::to_string(opcode));
 
@@ -568,7 +568,8 @@ void Cpu::Cycle() {
         default: error = true; break;
     }
     _system->totalClocks += (clocks/3);
-    _printClockDrift(opcode);
+    totalClocks++;
+    //_printClockDrift(opcode);
     //_system->logger->Log(std::to_string(clocks/3));
 }
 
@@ -1174,7 +1175,7 @@ bool Cpu::Interrupt(){
     _testInterrupt();
     _addr16.h = _read(vector++);
     _system->debug->trace.push_back(1);
-    _system->logger->Log("<<interrupt>>:  " + std::to_string(vector));
+    //_system->logger->Log("<<interrupt>>:  " + std::to_string(vector));
     pc = _addr16.w;
     return true;
 }

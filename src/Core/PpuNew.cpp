@@ -164,7 +164,7 @@ void PpuNew::_writeAddress(uint8_t value) {
 
 // $2007: PPUDATA (read)
 uint8_t PpuNew::_readData() {
-    uint8_t value = _system->ppu->Read(v);
+    uint8_t value = Read(v);
     // emulate buffered reads
     if (v%0x4000 < 0x3F00) {
         uint8_t buffered = bufferedData;
@@ -185,7 +185,7 @@ uint8_t PpuNew::_readData() {
 // $2007: PPUDATA (write)
 void PpuNew::_writeData(uint8_t value) {
     //_system->mem->Write(v, value);
-    _system->ppu->Write(v, value);
+    Write(v, value);
     if (flagIncrement == 0) {
         v += 1;
     } else {
@@ -202,9 +202,9 @@ void PpuNew::WriteDMA(uint8_t value){
         address++;
     }
     _system->cpu->clocks += 513;
-//    if (cpu.Cycles%2 == 1) {
-//        cpu.stall++;
-//    }
+    if (_system->cpu->totalClocks%2 == 1) {
+        _system->cpu->clocks++;
+    }
 }
 
 // NTSC Timing Helper Functions
@@ -285,25 +285,25 @@ void PpuNew::_clearVerticalBlank() {
 
 void PpuNew::_fetchNameTableByte() {
     uint16_t address = 0x2000 | (v & 0x0FFF);
-    nameTableByte = _system->mem->Read(address);
+    nameTableByte = Read(address);
 }
 
 void PpuNew::_fetchAttributeTableByte() {
     uint16_t address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
     uint8_t shift = ((v >> 4) & 4) | (v & 2);
-    attributeTableByte = ((_system->mem->Read(address) >> shift) & 3) << 2;
+    attributeTableByte = ((Read(address) >> shift) & 3) << 2;
 }
 
 void PpuNew::_fetchLowTileByte() {
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*(uint16_t)(flagBackgroundTable) + (uint16_t)(nameTableByte)*16 + fineY;
-    lowTileByte = _system->mem->Read(address);
+    lowTileByte = Read(address);
 }
 
 void PpuNew::_fetchHighTileByte() {
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*(uint16_t)(flagBackgroundTable) + (uint16_t)(nameTableByte)*16 + fineY;
-    highTileByte = _system->mem->Read(address + 8);
+    highTileByte = Read(address + 8);
 }
 
 void PpuNew::_storeTileData() {
@@ -410,8 +410,8 @@ uint32_t PpuNew::_fetchSpritePattern(int i, int row) {
         address = 0x1000*(uint16_t)(table) + (uint16_t)(tile)*16 + (uint16_t)(row);
     }
     uint8_t a = (attributes & 3) << 2;
-    lowTileByte = _system->mem->Read(address);
-    highTileByte = _system->mem->Read(address + 8);
+    lowTileByte = Read(address);
+    highTileByte = Read(address + 8);
     uint32_t data;
     for (int i = 0; i < 8; i++) {
         uint8_t p1, p2;
