@@ -4,6 +4,11 @@ set(REPO ../repo)
 #find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 
+#find_package(Boost 1.65.0 COMPONENTS system filesystem REQUIRED)
+#include_directories(${Boost_INCLUDE_DIRS})
+#add_executable(BoostTest main.cpp)
+#target_link_libraries(BoostTest ${Boost_LIBRARIES})
+
 set(SOURCE_FILES
         Core/Cpu.cpp Core/Cpu.h Core/Memory.cpp Core/Memory.h Core/Core.h
         Core/Ppu.h Core/Ppu.cpp Core/System.h Core/System.cpp Core/PpuNew.h Core/PpuNew.cpp

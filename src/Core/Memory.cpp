@@ -24,7 +24,7 @@ void CpuMemory::Reset() {
 
 uint8_t CpuMemory::Read(uint16_t addr) {
     if (addr < 0x2000) return _ram[(uint16_t)(addr % 0x0800)];
-    if (addr < 0x4000) return _system->ppu->ReadRegister(0x2000 + addr%8);
+    if (addr < 0x4000) return _system->ppu->ReadRegister(0x2000 + (addr%8));
     if (addr == 0x4014) return _system->ppu->ReadRegister(addr);
     if (addr == 0x4015) return 0; //APU
     if (addr == 0x4016) return 0; //Controller1

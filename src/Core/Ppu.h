@@ -35,6 +35,9 @@ public:
 
     int32_t clocks;
     bool render;
+    bool breakOnNextScanline;
+    int32_t scanlinesToRunFor;
+    int32_t framesToRunFor;
 
     virtual void Reset() = 0;
 
@@ -43,6 +46,7 @@ public:
     virtual uint8_t ReadRegister(uint16_t addr) = 0;
     virtual void WriteRegister(uint16_t addr, uint8_t data) = 0;
     virtual void WriteDMA(uint8_t value) = 0;
+    virtual void Snapshot() = 0;
 
     //virtual void RasterPixel(unsigned x) = 0;
     //virtual void RasterSprite() = 0;
@@ -61,6 +65,7 @@ public:
     virtual int16_t Scanline() = 0;
 
     virtual uint32_t* ScreenBuffer() = 0;
+    virtual uint8_t* TestBuffer() = 0;
 
 protected:
     ISystem* _system;

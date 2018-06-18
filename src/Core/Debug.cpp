@@ -47,6 +47,7 @@ Debug::Debug(ISystem *system) : IDebug::IDebug(system) {
     //breakpoints.push_back(0xFFF3);
     //breakpoints.push_back(0x0);
     //breakpoints.push_back(0x90cc);
+    //breakpoints.push_back(0x8e39);
     step = false;
     pause = false;
 }
@@ -268,9 +269,9 @@ void Debug::_setStatus() {
 
     output << "Clocks: " << hex8 << (int)(_system->totalClocks);
     setvalue(status.clock);
-    output << "Scanline: " << hex2 << (int)(_system->ppu->Scanline());
+    output << "Scanline: " << (int)(_system->ppu->Scanline()) << " " << hex2 << (int)(_system->ppu->Scanline());
     setvalue(status.scanline);
-    output << "Dot: " << hex2 << (int)_system->ppu->Dot();
+    output << "Dot: " << (int)(_system->ppu->Dot()) << " "  << hex2 << (int)_system->ppu->Dot();
     setvalue(status.dot);
     output << "XOffset: " << hex2 << (int)_system->ppu->X();
     setvalue(status.xaddr);
@@ -343,6 +344,10 @@ bool Debug::isBrk(int line){
             return true;
     }
     return false;
+}
+
+void Debug::Break(){
+    pause = true;
 }
 
 //std::string Cpu::Disassemble() {

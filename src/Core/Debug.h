@@ -55,6 +55,7 @@ public:
     virtual void GoPrev() = 0;
     virtual void AddBrk() = 0;
     virtual bool isBrk(int line) = 0;
+    virtual void Break() = 0;
     bool pause;
     bool step;
     uint16_t cursorPosition = 0;
@@ -74,6 +75,7 @@ public:
     void GoPrev() override;
     void AddBrk() override;
     bool isBrk(int line) override;
+    void Break() override;
 private:
 
     void _preDisassemble();

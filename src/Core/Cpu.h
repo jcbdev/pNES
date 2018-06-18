@@ -140,6 +140,14 @@ private:
     void _testInterrupt();
     void _printClockDrift(uint8_t opcode);
 
+    template<class T> std::string _tohex(T value){
+        std::stringstream stream;
+        stream << "0x"
+               << std::setfill ('0') << std::setw(sizeof(T)*2)
+               << std::hex << (long)value << std::dec;
+        return stream.str();
+    }
+
     bool _interruptPending;
     bool _nmi;
     bool _nmiPending;

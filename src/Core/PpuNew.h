@@ -6,6 +6,9 @@
 #define PNES_PPUNEW_H
 
 #include "Ppu.h"
+#include <string>
+#include <fstream>
+#include <iomanip>
 
 struct spr {
     uint8_t a;
@@ -23,6 +26,7 @@ public:
     uint8_t ReadRegister(uint16_t addr) override;
     void WriteRegister(uint16_t addr, uint8_t data) override;
     void WriteDMA(uint8_t value) override;
+    void Snapshot() override;
 
     void Step() override;
 
@@ -39,6 +43,7 @@ public:
     int16_t Scanline() override;
 
     uint32_t* ScreenBuffer() override;
+    uint8_t* TestBuffer() override;
 
 private:
     uint8_t _readPalette(uint16_t address);
@@ -72,6 +77,16 @@ private:
     uint32_t _fetchSpritePattern(int i, int row);
     void _evaluateSprites();
     uint16_t _mirrorAddress(uint16_t addr);
+    void _checkBreak();
+    void _trace(std::string log, bool showstats = false);
+
+    template<class T> std::string _tohex(T value){
+        std::stringstream stream;
+        stream << "0x"
+               << std::setfill ('0') << std::setw(sizeof(T)*2)
+               << std::hex << (long)value << std::dec;
+        return stream.str();
+    }
 
     void tick();
 
@@ -143,6 +158,7 @@ private:
     uint8_t bufferedData; // for buffered reads
 
     uint32_t _screenbuffer[256 * 261];
+    uint8_t _testbuffer[256 * 261 * 3];
 
     const uint8_t Mirror[5][4] = {
             {0, 0, 1, 1},

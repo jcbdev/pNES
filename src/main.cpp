@@ -78,6 +78,23 @@ void render(uint32_t* screenBuffer) {
     SDL_RenderPresent(renderer);
 } //render
 
+void renderTest(uint8_t* screenBuffer) {
+
+    SDL_UpdateTexture(buffer, NULL, screenBuffer, 256 * sizeof(uint8_t) * 3);
+
+    SDL_RenderClear(renderer);
+
+    // Render the screen
+    SDL_RenderSetLogicalSize(renderer, 1024, 960);
+    SDL_RenderCopy(renderer, buffer, NULL, NULL);
+
+    // Render scanlines
+//    SDL_RenderSetLogicalSize(renderer, 256 * 3, 262 * 3);
+//    SDL_RenderCopy(renderer, scanlineTexture, NULL, NULL);
+
+    SDL_RenderPresent(renderer);
+} //render
+
 //void debugRender(uint32_t* chr) {
 //    SDL_UpdateTexture(debugBuffer, NULL, chr, 256 * sizeof(uint32_t));
 //
@@ -247,7 +264,7 @@ int main() {
     ISystem *system = new System();
 
     //Load Rom
-    ILogger *logger = new ConsoleLogger();
+    ILogger *logger = new FileLogger(system);
     Cart *cart = new Nrom(system);
     CpuMemory *memory = new CpuMemory(system);
     Cpu *cpu = new Cpu(system);
@@ -258,6 +275,9 @@ int main() {
     system->Configure(cpu, memory, cart, ppu, debug, logger);
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
     cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
+    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/color_test.nes");
+    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/palette.nes");
+    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/nestest.nes");
     system->Reset();
 
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) != 0) {
@@ -269,14 +289,15 @@ int main() {
     Sans = TTF_OpenFont("/home/jimbo/CLionProjects/pNES/Monospace.ttf", 12); //this opens a font style and sets a size
     //Sans = TTF_OpenFont("/Users/james/ClionProjects/LittlePNes/Monospace.ttf", 12); //this opens a font style and sets a size
 
-    window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 512, 480, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 960, SDL_WINDOW_OPENGL);
     debugWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, SDL_WINDOW_OPENGL);
 
     //gl_context = SDL_GL_CreateContext(window);
 
     renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
     debugRenderer = SDL_CreateRenderer(debugWindow, 0, SDL_RENDERER_ACCELERATED);
-    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 256, 261);
+    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, 256, 240);
+    //buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
     //debugBuffer = SDL_CreateTexture(debugRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 512, 512);
 
     SDL_AddEventWatch(watch, NULL);
@@ -341,6 +362,15 @@ int main() {
                     gotoAddress = ss.str();
                     SDL_StartTextInput();
                 }
+                if (event.key.keysym.sym == SDLK_l) {
+                    ppu->breakOnNextScanline = true;
+                }
+                if (event.key.keysym.sym == SDLK_f) {
+                    ppu->framesToRunFor = 1;
+                }
+                if (event.key.keysym.sym == SDLK_k) {
+                    ppu->scanlinesToRunFor = 128;
+                }
             }
 
         }
@@ -369,17 +399,26 @@ int main() {
                 if (debug->pause) debug->cursorPosition = cpu->pc;
             }
 
-            if (ppu->clocks <= 0) ppu->Step();
-            if (ppu->Dot() == 340 && ppu->Scanline() == 0xF0) system->totalClocks = 0;
+            if (ppu->clocks <= 0) {
+                ppu->Step();
+//                if (system->totalClocks > 0xe4000){
+//                    debug->Break();
+//                    debug->Refresh();
+//                    debugRender(debug, cpu, isEditing, gotoAddress);
+//                }
+            }
+            //if (ppu->Dot() == 340 && ppu->Scanline() == 0xF0) system->totalClocks = 0;
 
             if (ppu->render) {
                 render(ppu->ScreenBuffer());
+                //uint8_t* buf = ppu->TestBuffer();
+                //renderTest(buf);
                 //debugRender(debug, cpu, isEditing, gotoAddress);
             }
         }
         else{
-            //debug->Refresh();
-            //debugRender(debug, cpu, isEditing, gotoAddress);
+            debug->Refresh();
+            debugRender(debug, cpu, isEditing, gotoAddress);
         }
     }
 
