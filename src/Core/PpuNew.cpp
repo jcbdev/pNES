@@ -211,7 +211,6 @@ uint8_t PpuNew::_readData() {
 void PpuNew::_writeData(uint8_t value) {
     if ((flagShowBackground || flagShowSprites) && (scanline <= 240 || scanline == 261)) return;
     _trace("write data: " + _tohex(value));
-    //_system->mem->Write(v, value);
     Write(v, value);
 
     if (flagIncrement == 0) {
@@ -223,10 +222,12 @@ void PpuNew::_writeData(uint8_t value) {
 
 // $4014: OAMDMA
 void PpuNew::WriteDMA(uint8_t value){
-    _trace("write dma: " + _tohex(value));
+    _trace("initiate write dma: " + _tohex(value));
     uint16_t address = (uint16_t)(value) << 8;
     for (int i = 0; i < 256; i++) {
-        oamData[oamAddress] = _system->mem->Read(address);
+        uint8_t val = _system->mem->Read(address);
+        _trace("write dma: " + _tohex(address) + "(" + _tohex(oamAddress) + ") -> " + _tohex(val));
+        oamData[oamAddress] = val;
         //oamData[oamAddress] = 0;
         oamAddress++;
         address++;
@@ -340,8 +341,8 @@ void PpuNew::_fetchAttributeTableByte() {
 }
 
 void PpuNew::_fetchLowTileByte() {
-    //lowTileByte = 0x00;
-    //return;
+    lowTileByte = 0x00;
+    return;
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*((uint16_t)(flagBackgroundTable)) + ((uint16_t)(nameTableByte)*16) + fineY;
     uint8_t val = Read(address);
@@ -350,6 +351,8 @@ void PpuNew::_fetchLowTileByte() {
 }
 
 void PpuNew::_fetchHighTileByte() {
+    highTileByte = 0x00;
+    return;
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*(uint16_t)(flagBackgroundTable) + ((uint16_t)(nameTableByte)*16) + fineY;
     uint8_t val = Read(address + 8);
@@ -387,9 +390,9 @@ uint8_t PpuNew::_backgroundPixel() {
 }
 
 spr PpuNew::_spritePixel() {
-    if (flagShowSprites == 0) {
+    //if (flagShowSprites == 0) {
         return { 0, 0 };
-    }
+    //}
     for (int i = 0; i < spriteCount; i++) {
         int offset = (cycle - 1) - int(spritePositions[i]);
         if (offset < 0 || offset > 7) {
@@ -444,8 +447,10 @@ void PpuNew::_renderPixel() {
 //    _testbuffer[2 + (x*3) + (y*256*3)] = color*4;
     //color = 3;
     uint32_t c = Palette[_readPalette((uint16_t)(color))%64];
+    //uint32_t c = color*64;
     //ppu.back.SetRGBA(x, y, c)
-    _screenbuffer[x + (y * 256)] =  (c << 8) + 0xFF;
+    //_screenbuffer[x + (y * 256)] =  (c << 8) + 0xFF;
+    _screenbuffer[x + (y * 256)] =  c;
     _testbuffer[(x*3) + (y*256*3)] = (uint8_t)(c >> 16) & 0xFF;
     _testbuffer[1 + (x*3) + (y*256*3)] = (uint8_t)(c >> 8) & 0xFF;
     _testbuffer[2 + (x*3) + (y*256*3)] = (uint8_t)(c) & 0xFF;
@@ -840,7 +845,8 @@ void PpuNew::_trace(std::string log, bool showstats) {
             << ", Att:" << _tohex(attributeTableByte)
             << ", Ltb:" << _tohex(lowTileByte)
             << ", Htb:" << _tohex(highTileByte)
-            << ", Fbt:" << _tohex(flagBackgroundTable);
+            << ", Fbt:" << _tohex(flagBackgroundTable)
+            << ", TileData:" << _tohex(tileData);
         output << " >>>";
     }
     else {

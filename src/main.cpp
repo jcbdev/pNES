@@ -264,7 +264,7 @@ int main() {
     ISystem *system = new System();
 
     //Load Rom
-    ILogger *logger = new FileLogger(system);
+    ILogger *logger = new ConsoleLogger(system);
     Cart *cart = new Nrom(system);
     CpuMemory *memory = new CpuMemory(system);
     Cpu *cpu = new Cpu(system);
@@ -274,10 +274,10 @@ int main() {
 
     system->Configure(cpu, memory, cart, ppu, debug, logger);
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
-    cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
+    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/color_test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/palette.nes");
-    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/nestest.nes");
+    cart->LoadRom("/home/jimbo/CLionProjects/pNES/nestest.nes");
     system->Reset();
 
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) != 0) {
@@ -296,7 +296,7 @@ int main() {
 
     renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
     debugRenderer = SDL_CreateRenderer(debugWindow, 0, SDL_RENDERER_ACCELERATED);
-    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, 256, 240);
+    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 240);
     //buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
     //debugBuffer = SDL_CreateTexture(debugRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 512, 512);
 
@@ -305,7 +305,7 @@ int main() {
     cpu->Reset();
     std::string gotoAddress = "8000";
     bool isEditing = false;
-    while(!quitting && !cpu->error) {
+    while(!quitting) {// && !cpu->error
 
         SDL_Event event;
         while( SDL_PollEvent(&event) ) {
@@ -381,7 +381,7 @@ int main() {
             ppu->clocks--;
 
             if (cpu->clocks <= 0) {
-                //debug->Refresh();
+                debug->Refresh();
                 //debugRender(debug, cpu, isEditing, gotoAddress);
                 if (debug->pause) {
                     cpu->clocks++;
@@ -412,8 +412,8 @@ int main() {
             if (ppu->render) {
                 render(ppu->ScreenBuffer());
                 //uint8_t* buf = ppu->TestBuffer();
-                //renderTest(buf);
-                //debugRender(debug, cpu, isEditing, gotoAddress);
+                //renderTest(ppu->TestBuffer());
+                debugRender(debug, cpu, isEditing, gotoAddress);
             }
         }
         else{

@@ -293,9 +293,12 @@ void Cpu::_printClockDrift(uint8_t opcode) {
         default: error = true; break;
     }
 #undef d
-
-    if (drift > 7)
+    auto idrift = drift;
+    if (drift > 7) {
         drift = drift - 513;
+        if ((_system->cpu->totalClocks%2) == 0)
+            drift--;
+    }
     if (_paged)
         drift--;
     if (drift != 0)
@@ -1062,7 +1065,7 @@ void Cpu::IndirectX(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readZp(zp++ + x);
     _addr16.h = _readZp(zp++ + x);
     if (!rmw && !write) _testInterrupt();
-    _val = _read(_addr16.w);
+    if (!write) _val = _read(_addr16.w);
     if (rmw) {
         if (!write) _testInterrupt();
         _write(_addr16.w, _val);
@@ -1071,6 +1074,7 @@ void Cpu::IndirectX(void (Cpu::*opcode)(), bool rmw, bool write) {
     if (write) {
         _testInterrupt();
         _writeZp(_addr16.w, _val);
+        _addClocks();
         _addClocks();
     }
 }
@@ -1082,7 +1086,7 @@ void Cpu::IndirectY(void (Cpu::*opcode)(), bool rmw, bool write) {
     _paged = _system->mem->PageIfRequired(_addr16.w, _addr16.w + x);
     if (_paged) _addClocks();
     if (!rmw && !write) _testInterrupt();
-    _val = _read(_addr16.w + y);
+    if (!write) _val = _read(_addr16.w + y);
     if (rmw) {
         if (!write) _testInterrupt();
         _write(_addr16.w + y, _val);
@@ -1092,6 +1096,7 @@ void Cpu::IndirectY(void (Cpu::*opcode)(), bool rmw, bool write) {
         _testInterrupt();
         _write(_addr16.w + y, _val);
         _addClocks();
+        _addClocks();
     }
 }
 
@@ -1099,7 +1104,7 @@ void Cpu::Absolute(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
     if (!rmw && !write) _testInterrupt();
-    _val = _read(_addr16.w);
+    if (!write) _val = _read(_addr16.w);
     if (rmw){
         if (!write) _testInterrupt();
         _write(_addr16.w, _val);
@@ -1109,6 +1114,7 @@ void Cpu::Absolute(void (Cpu::*opcode)(), bool rmw, bool write) {
     if (write) {
         _testInterrupt();
         _write(_addr16.w, _val);
+        _addClocks();
     }
 }
 
@@ -1116,7 +1122,7 @@ void Cpu::AbsoluteX(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
     if (!rmw && !write) _testInterrupt();
-    _val = _read(_addr16.w + x);
+    if (!write) _val = _read(_addr16.w + x);
     if (rmw) {
         if (!write) _testInterrupt();
         _write(_addr16.w + x, _val);
@@ -1126,6 +1132,7 @@ void Cpu::AbsoluteX(void (Cpu::*opcode)(), bool rmw, bool write) {
     if (write) {
         _testInterrupt();
         _write(_addr16.w + x, _val);
+        _addClocks();
         _addClocks();
     }
 }
@@ -1134,7 +1141,7 @@ void Cpu::AbsoluteY(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
     if (!rmw && !write) _testInterrupt();
-    _val = _read(_addr16.w + y);
+    if (!write) _val = _read(_addr16.w + y);
     if (rmw) {
         if (!write) _testInterrupt();
         _write(_addr16.w + y, _val);
@@ -1143,6 +1150,7 @@ void Cpu::AbsoluteY(void (Cpu::*opcode)(), bool rmw, bool write) {
     if (write) {
         _testInterrupt();
         _write(_addr16.w + y, _val);
+        _addClocks();
         _addClocks();
     }
 }

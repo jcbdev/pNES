@@ -32,7 +32,7 @@ uint8_t Nrom::Read(uint16_t addr) {
 void Nrom::Write(uint16_t addr, uint8_t data) {
     if (addr < 0x2000) {
         _system->logger->Log("        **** Write ChrRom[" + std::to_string(ChrBank) + "]: " + _tohex(addr) + " <- " + _tohex(data));
-        Chr[ChrBank][addr] = data;
+        //Chr[ChrBank][addr] = data;
     }
     else if (addr >= 0x8000)
         UpperPrgBank = data % PrgSize;
