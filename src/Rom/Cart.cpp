@@ -112,7 +112,7 @@ void Cart::SetBanks(char *buffer) {
 
     Chr = new uint8_t*[ChrSize];
     for (int i=0; i<ChrSize; i++) {
-        int addr = 16 + ((PrgSize-1)*0x4000) + (i*0x2000);
+        int addr = 16 + ((PrgSize)*0x4000) + (i*0x2000);
         Chr[i] = new uint8_t[0x2000];
         memcpy(Chr[i], &buffer[addr], 0x2000);
     }

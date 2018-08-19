@@ -84,7 +84,7 @@ void PpuNew::_writeControl(uint8_t value) {
     flagBackgroundTable = (value >> 4) & 1;
     flagSpriteSize = (value >> 5) & 1;
     flagMasterSlave = (value >> 6) & 1;
-    nmiOutput = (value>>7)&1 == 1;
+    nmiOutput = ((value>>7)&1) == 1;
     _nmiChange();
     // t: ....BA.. ........ = d: ......BA
     //t = (t & 0xF3FF) | (((uint16_t)(value) & 0x03) << 10);
@@ -341,8 +341,8 @@ void PpuNew::_fetchAttributeTableByte() {
 }
 
 void PpuNew::_fetchLowTileByte() {
-    lowTileByte = 0x00;
-    return;
+    //lowTileByte = 0x01;
+    //return;
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*((uint16_t)(flagBackgroundTable)) + ((uint16_t)(nameTableByte)*16) + fineY;
     uint8_t val = Read(address);
@@ -351,8 +351,8 @@ void PpuNew::_fetchLowTileByte() {
 }
 
 void PpuNew::_fetchHighTileByte() {
-    highTileByte = 0x00;
-    return;
+    //highTileByte = 0x00;
+    //return;
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*(uint16_t)(flagBackgroundTable) + ((uint16_t)(nameTableByte)*16) + fineY;
     uint8_t val = Read(address + 8);

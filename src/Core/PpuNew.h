@@ -8,6 +8,7 @@
 #include "Ppu.h"
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <iomanip>
 
 struct spr {
