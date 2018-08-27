@@ -5,6 +5,7 @@
 #include "Memory.h"
 #include "../Rom/Cart.h"
 #include "Ppu.h"
+#include "Controller.h"
 #include "../Helpers/Logger.h"
 
 IMemory::IMemory(ISystem *system) {
@@ -27,7 +28,7 @@ uint8_t CpuMemory::Read(uint16_t addr) {
     if (addr < 0x4000) return _system->ppu->ReadRegister(0x2000 + (addr%8));
     if (addr == 0x4014) return _system->ppu->ReadRegister(addr);
     if (addr == 0x4015) return 0; //APU
-    if (addr == 0x4016) return 0; //Controller1
+    if (addr == 0x4016) return _system->controller1->Read();
     if (addr == 0x4017) return 0; //Controller2
     if (addr < 0x6000) return 0; //IORegs
     if (addr >= 0x6000) return _system->cart->Read(addr);
@@ -45,7 +46,9 @@ void CpuMemory::Write(uint16_t addr, uint8_t value) {
     else if (addr < 0x4014) {} //APU
     else if (addr == 0x4014) _system->ppu->WriteRegister(addr, value);
     else if (addr == 0x4015) {} //APU
-    else if (addr == 0x4016) {} //Controller1,2
+    else if (addr == 0x4016) {
+        _system->controller1->Write(value);
+    } //Controller1,2
     else if (addr == 0x4017) {} //APU
     else if (addr < 0x6000) {} //IORegs
     else _system->cart->Write(addr, value);

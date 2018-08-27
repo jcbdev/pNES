@@ -58,6 +58,7 @@ public:
     virtual void Break() = 0;
     bool pause;
     bool step;
+    bool enabled;
     uint16_t cursorPosition = 0;
     std::list<int16_t> breakpoints;
 

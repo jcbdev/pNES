@@ -7,11 +7,12 @@
 #include "Cpu.h"
 #include "Ppu.h"
 
-void System::Configure(ICpu *cpu, IMemory *mem, Cart *cart, IPpu *ppu, IDebug *debug, ILogger *logger) {
+void System::Configure(ICpu *cpu, IMemory *mem, Cart *cart, IPpu *ppu, IController* controller1, IDebug *debug, ILogger *logger) {
     this->cpu = cpu;
     this->mem = mem;
     this->cart = cart;
     this->ppu = ppu;
+    this->controller1 = controller1;
     this->debug = debug;
     this->logger = logger;
 }

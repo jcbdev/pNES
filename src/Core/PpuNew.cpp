@@ -390,9 +390,9 @@ uint8_t PpuNew::_backgroundPixel() {
 }
 
 spr PpuNew::_spritePixel() {
-    //if (flagShowSprites == 0) {
+    if (flagShowSprites == 0) {
         return { 0, 0 };
-    //}
+    }
     for (int i = 0; i < spriteCount; i++) {
         int offset = (cycle - 1) - int(spritePositions[i]);
         if (offset < 0 || offset > 7) {
@@ -449,8 +449,8 @@ void PpuNew::_renderPixel() {
     uint32_t c = Palette[_readPalette((uint16_t)(color))%64];
     //uint32_t c = color*64;
     //ppu.back.SetRGBA(x, y, c)
-    //_screenbuffer[x + (y * 256)] =  (c << 8) + 0xFF;
-    _screenbuffer[x + (y * 256)] =  c;
+    _screenbuffer[x + (y * 256)] =  (c << 8) + 0xFF;
+    //_screenbuffer[x + (y * 256)] =  c;
     _testbuffer[(x*3) + (y*256*3)] = (uint8_t)(c >> 16) & 0xFF;
     _testbuffer[1 + (x*3) + (y*256*3)] = (uint8_t)(c >> 8) & 0xFF;
     _testbuffer[2 + (x*3) + (y*256*3)] = (uint8_t)(c) & 0xFF;
@@ -830,6 +830,7 @@ void PpuNew::Snapshot() {
 }
 
 void PpuNew::_trace(std::string log, bool showstats) {
+    return;
     std::stringstream output;
     if (showstats) {
         output << "    <<< ";

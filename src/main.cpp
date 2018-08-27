@@ -9,7 +9,9 @@
 #include "Rom/Nrom.h"
 #include "Core/Ppu.h"
 #include "Core/Debug.h"
+#include "Core/NoDebug.h"
 #include "Core/PpuNew.h"
+#include "Core/Controller.h"
 
 static SDL_Window *window = NULL;
 static SDL_Window *debugWindow = NULL;
@@ -214,28 +216,28 @@ void debugRender(IDebug *debug, ICpu *cpu, bool isEditing, std::string gotoAddre
     renderText(debug->status.dot, 420, 146, White);
 
     //output trace
-    auto traceIterator = debug->trace.rbegin();
-    int instructions = 0;
-    ypos = 750;
-    while (traceIterator != debug->trace.rend() && instructions < 55){
-        instructions++;
-        ypos -= 14;
-
-        iterator = debug->disassembly.find(*traceIterator);
-        if (iterator == debug->disassembly.end()){
-            if (*traceIterator > 0x8000) {
-                int opcodeSize = 0;
-                debug->Decode(*traceIterator, &opcodeSize, true);
-                iterator = debug->disassembly.find(*traceIterator);
-                renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
-                std::cout << "Unassembled missing instruction at: " << *traceIterator << std::endl;
-            }
-
-        }
-        else
-            renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
-        traceIterator++;
-    }
+//    auto traceIterator = debug->trace.rbegin();
+//    int instructions = 0;
+//    ypos = 750;
+//    while (traceIterator != debug->trace.rend() && instructions < 55){
+//        instructions++;
+//        ypos -= 14;
+//
+//        iterator = debug->disassembly.find(*traceIterator);
+//        if (iterator == debug->disassembly.end()){
+//            if (*traceIterator > 0x8000) {
+//                int opcodeSize = 0;
+//                debug->Decode(*traceIterator, &opcodeSize, true);
+//                iterator = debug->disassembly.find(*traceIterator);
+//                renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
+//                std::cout << "Unassembled missing instruction at: " << *traceIterator << std::endl;
+//            }
+//
+//        }
+//        else
+//            renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
+//        traceIterator++;
+//    }
 
     if (isEditing) {
         std::stringstream addr;
@@ -270,9 +272,11 @@ int main() {
     Cpu *cpu = new Cpu(system);
     PpuNew *ppu = new PpuNew(system);
     //Ppu *ppu = new Ppu(system);
-    Debug *debug = new Debug(system);
+    IDebug *debug = new NoDebug(system);
 
-    system->Configure(cpu, memory, cart, ppu, debug, logger);
+    Controller *controller1 = new Controller(system);
+
+    system->Configure(cpu, memory, cart, ppu, controller1, debug, logger);
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
     //cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/color_test.nes");
@@ -291,13 +295,17 @@ int main() {
     Sans = TTF_OpenFont("/Users/james/ClionProjects/LittlePNes/Monospace.ttf", 12); //this opens a font style and sets a size
 
     window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 960, SDL_WINDOW_OPENGL);
-    debugWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, SDL_WINDOW_OPENGL);
+    renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
+    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
+
+    if (debug->enabled) {
+        debugWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768,
+                                       SDL_WINDOW_OPENGL);
+        debugRenderer = SDL_CreateRenderer(debugWindow, 0, SDL_RENDERER_ACCELERATED);
+    }
 
     //gl_context = SDL_GL_CreateContext(window);
 
-    renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
-    debugRenderer = SDL_CreateRenderer(debugWindow, 0, SDL_RENDERER_ACCELERATED);
-    buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 240);
     //buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
     //debugBuffer = SDL_CreateTexture(debugRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 512, 512);
 
@@ -314,66 +322,116 @@ int main() {
                 quitting = true;
             }
 
-            if (event.type == SDL_KEYDOWN && isEditing) {
-                if (event.key.keysym.sym == SDLK_BACKSPACE){
-                    gotoAddress.pop_back();
+            if (!debug->enabled) {
+                if (event.type == SDL_KEYDOWN) {
+                    if (event.key.keysym.sym == SDLK_z) {
+                        controller1->SetButton(0);
+                    }
+                    if (event.key.keysym.sym == SDLK_x) {
+                        controller1->SetButton(1);
+                    }
+                    if (event.key.keysym.sym == SDLK_a) {
+                        controller1->SetButton(2);
+                    }
+                    if (event.key.keysym.sym == SDLK_s) {
+                        controller1->SetButton(3);
+                    }
+                    if (event.key.keysym.sym == SDLK_UP) {
+                        controller1->SetButton(4);
+                    }
+                    if (event.key.keysym.sym == SDLK_DOWN) {
+                        controller1->SetButton(5);
+                    }
+                    if (event.key.keysym.sym == SDLK_LEFT) {
+                        controller1->SetButton(6);
+                    }
+                    if (event.key.keysym.sym == SDLK_RIGHT) {
+                        controller1->SetButton(7);
+                    }
                 }
-
-                else if (event.key.keysym.sym == SDLK_ESCAPE){
-                    SDL_StopTextInput();
-                    isEditing = false;
-                }
-
-                else if (event.key.keysym.sym == SDLK_RETURN){
-                    SDL_StopTextInput();
-                    isEditing = false;
-                    debug->cursorPosition = std::stoul(gotoAddress, nullptr, 16);
-                }
-
-
-            }
-            else if (event.type == SDL_TEXTINPUT) {
-                gotoAddress += event.text.text;
-            }
-            else if (event.type == SDL_KEYDOWN && !isEditing) {
-                if (event.key.keysym.sym == SDLK_d)
-                    debug->pause = !debug->pause;
-                if (event.key.keysym.sym == SDLK_s) {
-                    debug->pause = false;
-                    debug->step = true;
-                }
-                if (event.key.keysym.sym == SDLK_ESCAPE)
-                    quitting = true;
-                if (event.key.keysym.sym == SDLK_F10) {
-                    system->Reset();
-                }
-                if (event.key.keysym.sym == SDLK_UP) {
-                    if (debug->cursorPosition > 0x8000) debug->GoPrev();
-                }
-                if (event.key.keysym.sym == SDLK_DOWN) {
-                    if (debug->cursorPosition < 0xFFFF) debug->GoNext();
-                }
-                if (event.key.keysym.sym == SDLK_SPACE) {
-                    debug->AddBrk();
-                }
-                if (event.key.keysym.sym == SDLK_g) {
-                    isEditing = true;
-                    std::stringstream ss;
-                    ss << std::setfill('0') << std::setw(4) << (int)cpu->pc;
-                    gotoAddress = ss.str();
-                    SDL_StartTextInput();
-                }
-                if (event.key.keysym.sym == SDLK_l) {
-                    ppu->breakOnNextScanline = true;
-                }
-                if (event.key.keysym.sym == SDLK_f) {
-                    ppu->framesToRunFor = 1;
-                }
-                if (event.key.keysym.sym == SDLK_k) {
-                    ppu->scanlinesToRunFor = 128;
+                if (event.type == SDL_KEYUP) {
+                    if (event.key.keysym.sym == SDLK_z) {
+                        controller1->UnsetButton(0);
+                    }
+                    if (event.key.keysym.sym == SDLK_x) {
+                        controller1->UnsetButton(1);
+                    }
+                    if (event.key.keysym.sym == SDLK_a) {
+                        controller1->UnsetButton(2);
+                    }
+                    if (event.key.keysym.sym == SDLK_s) {
+                        controller1->UnsetButton(3);
+                    }
+                    if (event.key.keysym.sym == SDLK_UP) {
+                        controller1->UnsetButton(4);
+                    }
+                    if (event.key.keysym.sym == SDLK_DOWN) {
+                        controller1->UnsetButton(5);
+                    }
+                    if (event.key.keysym.sym == SDLK_LEFT) {
+                        controller1->UnsetButton(6);
+                    }
+                    if (event.key.keysym.sym == SDLK_RIGHT) {
+                        controller1->UnsetButton(7);
+                    }
                 }
             }
 
+            if (debug->enabled) {
+                if (event.type == SDL_KEYDOWN && isEditing) {
+                    if (event.key.keysym.sym == SDLK_BACKSPACE) {
+                        gotoAddress.pop_back();
+                    } else if (event.key.keysym.sym == SDLK_ESCAPE) {
+                        SDL_StopTextInput();
+                        isEditing = false;
+                    } else if (event.key.keysym.sym == SDLK_RETURN) {
+                        SDL_StopTextInput();
+                        isEditing = false;
+                        debug->cursorPosition = std::stoul(gotoAddress, nullptr, 16);
+                    }
+
+
+                } else if (event.type == SDL_TEXTINPUT) {
+                    gotoAddress += event.text.text;
+                } else if (event.type == SDL_KEYDOWN && !isEditing) {
+                    if (event.key.keysym.sym == SDLK_d)
+                        debug->pause = !debug->pause;
+                    if (event.key.keysym.sym == SDLK_s) {
+                        debug->pause = false;
+                        debug->step = true;
+                    }
+                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                        quitting = true;
+                    if (event.key.keysym.sym == SDLK_F10) {
+                        system->Reset();
+                    }
+                    if (event.key.keysym.sym == SDLK_UP) {
+                        if (debug->cursorPosition > 0x8000) debug->GoPrev();
+                    }
+                    if (event.key.keysym.sym == SDLK_DOWN) {
+                        if (debug->cursorPosition < 0xFFFF) debug->GoNext();
+                    }
+                    if (event.key.keysym.sym == SDLK_SPACE) {
+                        debug->AddBrk();
+                    }
+                    if (event.key.keysym.sym == SDLK_g) {
+                        isEditing = true;
+                        std::stringstream ss;
+                        ss << std::setfill('0') << std::setw(4) << (int) cpu->pc;
+                        gotoAddress = ss.str();
+                        SDL_StartTextInput();
+                    }
+                    if (event.key.keysym.sym == SDLK_l) {
+                        ppu->breakOnNextScanline = true;
+                    }
+                    if (event.key.keysym.sym == SDLK_f) {
+                        ppu->framesToRunFor = 1;
+                    }
+                    if (event.key.keysym.sym == SDLK_k) {
+                        ppu->scanlinesToRunFor = 128;
+                    }
+                }
+            }
         }
 
         if (!debug->pause) {
@@ -424,9 +482,9 @@ int main() {
     }
 
     SDL_DelEventWatch(watch, NULL);
-    SDL_DestroyRenderer(debugRenderer);
+    if (debug->enabled) SDL_DestroyRenderer(debugRenderer);
     //SDL_DestroyTexture(debugBuffer);
-    SDL_DestroyWindow(debugWindow);
+    if (debug->enabled) SDL_DestroyWindow(debugWindow);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyTexture(buffer);
     SDL_DestroyWindow(window);

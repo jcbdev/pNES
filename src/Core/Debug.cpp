@@ -50,6 +50,7 @@ Debug::Debug(ISystem *system) : IDebug::IDebug(system) {
     //breakpoints.push_back(0x8e39);
     step = false;
     pause = false;
+    enabled = true;
 }
 
 std::string Debug::Decode(int pc, int* increment, bool dynamic) {

@@ -14,7 +14,8 @@ set(SOURCE_FILES
         Core/Ppu.h Core/Ppu.cpp Core/System.h Core/System.cpp Core/PpuNew.h Core/PpuNew.cpp
         Helpers/Logger.h Helpers/Logger.cpp
         Rom/Cart.h Rom/Cart.cpp Rom/RomHeader.h Rom/RomTypes.h
-        Rom/Nrom.cpp Rom/Nrom.h Core/System.cpp Core/System.h Core/Debug.cpp Core/Debug.h)
+        Rom/Nrom.cpp Rom/Nrom.h Core/System.cpp Core/System.h Core/Debug.cpp Core/Debug.h
+        Core/Controller.h Core/Controller.cpp Core/NoDebug.h Core/NoDebug.cpp)
 
 add_library(core ${SOURCE_FILES})
 add_executable(pNes main.cpp)

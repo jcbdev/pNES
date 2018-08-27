@@ -18,17 +18,19 @@ class Cart;
 class IPpu;
 class ILogger;
 class IDebug;
+class IController;
 
 class ISystem {
 public:
     ISystem();
-    virtual void Configure(ICpu* cpu, IMemory* mem, Cart* cart, IPpu* ppu, IDebug *debug, ILogger* logger) = 0;
+    virtual void Configure(ICpu* cpu, IMemory* mem, Cart* cart, IPpu* ppu, IController* controller1, IDebug *debug, ILogger* logger) = 0;
     virtual void Reset() = 0;
 
     ICpu* cpu;
     IMemory* mem;
     Cart* cart;
     IPpu* ppu;
+    IController* controller1;
     IDebug *debug;
     ILogger* logger;
     uint32_t totalClocks;
@@ -37,7 +39,7 @@ public:
 class System : public ISystem {
 public:
     System();
-    void Configure(ICpu* cpu, IMemory* mem, Cart* cart, IPpu* ppu, IDebug* debug, ILogger* logger) override;
+    void Configure(ICpu* cpu, IMemory* mem, Cart* cart, IPpu* ppu, IController* controller1, IDebug* debug, ILogger* logger) override;
     void Reset() override;
 };
 
