@@ -5,6 +5,8 @@
 #ifndef PNES_NODEBUG_H
 #define PNES_NODEBUG_H
 
+#include <sstream>
+#include <iomanip>
 #include "System.h"
 #include "Debug.h"
 

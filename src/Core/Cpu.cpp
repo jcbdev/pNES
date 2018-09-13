@@ -491,10 +491,10 @@ void Cpu::Cycle() {
 
         //Lsr
         case 0x4A: LsrAccumulator(); break;
-        case 0x46: Read(&Cpu::Zeropage, &Cpu::Lsr); break;
-        case 0x56: Read(&Cpu::ZeropageX, &Cpu::Lsr); break;
-        case 0x4E: Read(&Cpu::Absolute, &Cpu::Lsr); break;
-        case 0x5E: Read(&Cpu::AbsoluteX, &Cpu::Lsr); break;
+        case 0x46: Rmw(&Cpu::Zeropage, &Cpu::Lsr); break;
+        case 0x56: Rmw(&Cpu::ZeropageX, &Cpu::Lsr); break;
+        case 0x4E: Rmw(&Cpu::Absolute, &Cpu::Lsr); break;
+        case 0x5E: Rmw(&Cpu::AbsoluteX, &Cpu::Lsr); break;
 
         //Nop
         case 0xEA: Cpu::Nop(); break;
@@ -1073,7 +1073,7 @@ void Cpu::IndirectX(void (Cpu::*opcode)(), bool rmw, bool write) {
     (this->*opcode)();
     if (write) {
         _testInterrupt();
-        _writeZp(_addr16.w, _val);
+        _write(_addr16.w, _val);
         _addClocks();
         _addClocks();
     }
@@ -1104,7 +1104,7 @@ void Cpu::Absolute(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
     if (!rmw && !write) _testInterrupt();
-    if (!write) _val = _read(_addr16.w);
+    if (!write || rmw) _val = _read(_addr16.w);
     if (rmw){
         if (!write) _testInterrupt();
         _write(_addr16.w, _val);

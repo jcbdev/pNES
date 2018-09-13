@@ -16,7 +16,7 @@ Nrom::~Nrom() {
 uint8_t Nrom::Read(uint16_t addr) {
     if (addr < 0x2000) {
         uint8_t val = Chr[ChrBank][addr];
-        _system->logger->Log("        **** Read ChrRom[" + std::to_string(ChrBank) + "]: " + _tohex(addr) + " -> " + _tohex(val));
+        //_system->logger->Log("        **** Read ChrRom[" + std::to_string(ChrBank) + "]: " + _tohex(addr) + " -> " + _tohex(val));
         return val;
     }
     if (addr >= 0xC000)

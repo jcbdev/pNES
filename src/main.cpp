@@ -281,8 +281,8 @@ int main() {
     //cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/color_test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/palette.nes");
-    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/nestest.nes");
-    cart->LoadRom("/Users/james/ClionProjects/LittlePNes/nestest.nes");
+    cart->LoadRom("/home/jimbo/CLionProjects/pNES/nestest.nes");
+    //cart->LoadRom("/Users/james/ClionProjects/LittlePNes/nestest.nes");
     system->Reset();
 
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) != 0) {
@@ -291,8 +291,8 @@ int main() {
     }
 
     TTF_Init();
-    //Sans = TTF_OpenFont("/home/jimbo/CLionProjects/pNES/Monospace.ttf", 12); //this opens a font style and sets a size
-    Sans = TTF_OpenFont("/Users/james/ClionProjects/LittlePNes/Monospace.ttf", 12); //this opens a font style and sets a size
+    Sans = TTF_OpenFont("/home/jimbo/CLionProjects/pNES/Monospace.ttf", 12); //this opens a font style and sets a size
+    //Sans = TTF_OpenFont("/Users/james/ClionProjects/LittlePNes/Monospace.ttf", 12); //this opens a font style and sets a size
 
     window = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 960, SDL_WINDOW_OPENGL);
     renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
