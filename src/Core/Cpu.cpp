@@ -485,9 +485,9 @@ void Cpu::Cycle() {
         //Ldy
         case 0xA0: Read(&Cpu::Immediate, &Cpu::Ldy); break;
         case 0xA4: Read(&Cpu::Zeropage, &Cpu::Ldy); break;
-        case 0xB4: Read(&Cpu::ZeropageY, &Cpu::Ldy); break;
+        case 0xB4: Read(&Cpu::ZeropageX, &Cpu::Ldy); break;
         case 0xAC: Read(&Cpu::Absolute, &Cpu::Ldy); break;
-        case 0xBC: Read(&Cpu::AbsoluteY, &Cpu::Ldy); break;
+        case 0xBC: Read(&Cpu::AbsoluteX, &Cpu::Ldy); break;
 
         //Lsr
         case 0x4A: LsrAccumulator(); break;
@@ -1065,7 +1065,7 @@ void Cpu::IndirectX(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readZp(zp++ + x);
     _addr16.h = _readZp(zp++ + x);
     if (!rmw && !write) _testInterrupt();
-    if (!write) _val = _read(_addr16.w);
+    if (!write || rmw) _val = _read(_addr16.w);
     if (rmw) {
         if (!write) _testInterrupt();
         _write(_addr16.w, _val);
@@ -1086,7 +1086,7 @@ void Cpu::IndirectY(void (Cpu::*opcode)(), bool rmw, bool write) {
     _paged = _system->mem->PageIfRequired(_addr16.w, _addr16.w + x);
     if (_paged) _addClocks();
     if (!rmw && !write) _testInterrupt();
-    if (!write) _val = _read(_addr16.w + y);
+    if (!write || rmw) _val = _read(_addr16.w + y);
     if (rmw) {
         if (!write) _testInterrupt();
         _write(_addr16.w + y, _val);
@@ -1122,7 +1122,7 @@ void Cpu::AbsoluteX(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
     if (!rmw && !write) _testInterrupt();
-    if (!write) _val = _read(_addr16.w + x);
+    if (!write || rmw) _val = _read(_addr16.w + x);
     if (rmw) {
         if (!write) _testInterrupt();
         _write(_addr16.w + x, _val);
@@ -1141,7 +1141,7 @@ void Cpu::AbsoluteY(void (Cpu::*opcode)(), bool rmw, bool write) {
     _addr16.l = _readPcAndInc();
     _addr16.h = _readPcAndInc();
     if (!rmw && !write) _testInterrupt();
-    if (!write) _val = _read(_addr16.w + y);
+    if (!write || rmw) _val = _read(_addr16.w + y);
     if (rmw) {
         if (!write) _testInterrupt();
         _write(_addr16.w + y, _val);
