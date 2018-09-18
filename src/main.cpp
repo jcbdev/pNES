@@ -277,11 +277,11 @@ int main() {
     Controller *controller1 = new Controller(system);
 
     system->Configure(cpu, memory, cart, ppu, controller1, debug, logger);
-    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
+    cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
     //cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/color_test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/palette.nes");
-    cart->LoadRom("/home/jimbo/CLionProjects/pNES/nestest.nes");
+    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/nestest.nes");
     //cart->LoadRom("/Users/james/ClionProjects/LittlePNes/nestest.nes");
     system->Reset();
 
@@ -309,15 +309,16 @@ int main() {
     //buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
     //debugBuffer = SDL_CreateTexture(debugRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 512, 512);
 
-    SDL_AddEventWatch(watch, NULL);
+    //SDL_AddEventWatch(watch, NULL);
 
     cpu->Reset();
     std::string gotoAddress = "8000";
     bool isEditing = false;
-    while(!quitting) {// && !cpu->error
 
+    while(!quitting) {// && !cpu->error
         SDL_Event event;
         while( SDL_PollEvent(&event) ) {
+            SDL_Delay(1);
             if(event.type == SDL_QUIT) {
                 quitting = true;
             }
@@ -434,51 +435,53 @@ int main() {
             }
         }
 
-        if (!debug->pause) {
+        while (!ppu->render) {
+            if (!debug->pause) {
 
-            cpu->clocks--;
-            ppu->clocks--;
+                cpu->clocks--;
+                ppu->clocks--;
 
-            if (cpu->clocks <= 0) {
-                debug->Refresh();
-                //debugRender(debug, cpu, isEditing, gotoAddress);
-                if (debug->pause) {
-                    cpu->clocks++;
-                    ppu->clocks++;
-                    continue;
+                if (cpu->clocks <= 0) {
+                    debug->Refresh();
+                    //debugRender(debug, cpu, isEditing, gotoAddress);
+                    if (debug->pause) {
+                        cpu->clocks++;
+                        ppu->clocks++;
+                        continue;
+                    }
+                    if (debug->step) {
+                        debug->step = false;
+                        debug->pause = true;
+                    }
+
+                    if (!cpu->Interrupt())
+                        cpu->Cycle();
+
+                    if (debug->pause) debug->cursorPosition = cpu->pc;
                 }
-                if (debug->step) {
-                    debug->step = false;
-                    debug->pause = true;
-                }
 
-                if (!cpu->Interrupt())
-                    cpu->Cycle();
-
-                if (debug->pause) debug->cursorPosition = cpu->pc;
-            }
-
-            if (ppu->clocks <= 0) {
-                ppu->Step();
+                if (ppu->clocks <= 0) {
+                    ppu->Step();
 //                if (system->totalClocks > 0xe4000){
 //                    debug->Break();
 //                    debug->Refresh();
 //                    debugRender(debug, cpu, isEditing, gotoAddress);
 //                }
-            }
-            //if (ppu->Dot() == 340 && ppu->Scanline() == 0xF0) system->totalClocks = 0;
+                }
+                //if (ppu->Dot() == 340 && ppu->Scanline() == 0xF0) system->totalClocks = 0;
 
-            if (ppu->render) {
-                render(ppu->ScreenBuffer());
-                //uint8_t* buf = ppu->TestBuffer();
-                //renderTest(ppu->TestBuffer());
-                debugRender(debug, cpu, isEditing, gotoAddress);
+
+            } else {
+//                debug->Refresh();
+//                debugRender(debug, cpu, isEditing, gotoAddress);
             }
         }
-        else{
-            debug->Refresh();
-            debugRender(debug, cpu, isEditing, gotoAddress);
-        }
+
+        render(ppu->ScreenBuffer());
+        if (debug->enabled) debugRender(debug, cpu, isEditing, gotoAddress);
+
+        SDL_Delay(1);
+        //logger->Log("tick");
     }
 
     SDL_DelEventWatch(watch, NULL);

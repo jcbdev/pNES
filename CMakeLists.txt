@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 include(${CMAKE_SOURCE_DIR}/repo/FindSDL2/FindSDL2.cmake)
 include(${CMAKE_SOURCE_DIR}/repo/FindSDL2/FindSDL2_ttf.cmake)
+include(${CMAKE_SOURCE_DIR}/repo/Gperftools/FindGperftools.cmake)
 
 add_subdirectory(src)
 add_subdirectory(test)

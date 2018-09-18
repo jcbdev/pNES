@@ -18,7 +18,7 @@ uint8_t PpuNew::_readPalette(uint16_t address) {
     if (address >= 16 && (address%4) == 0) {
         address -= 16;
     }
-    _trace("read palette: " + _tohex(address) + " -> " + _tohex(paletteData[address]));
+    //_trace("read palette: " + _tohex(address) + " -> " + _tohex(paletteData[address]));
     return paletteData[address];
 }
 
@@ -26,12 +26,12 @@ void PpuNew::_writePalette(uint16_t address, uint8_t value) {
     if (address >= 16 && (address%4) == 0) {
         address -= 16;
     }
-    _trace("write palette: " + _tohex(address) + " <- " + _tohex(value));
+    //_trace("write palette: " + _tohex(address) + " <- " + _tohex(value));
     paletteData[address] = value;
 }
 
 uint8_t PpuNew::ReadRegister(uint16_t addr) {
-    _trace("read register: " + _tohex(addr));
+    //_trace("read register: " + _tohex(addr));
     switch (addr){
         case 0x2002:
             return _readStatus();
@@ -45,7 +45,7 @@ uint8_t PpuNew::ReadRegister(uint16_t addr) {
 }
 
 void PpuNew::WriteRegister(uint16_t addr, uint8_t data) {
-    _trace("write register: " + _tohex(addr) + ", " + _tohex(data));
+    //_trace("write register: " + _tohex(addr) + ", " + _tohex(data));
     reg = data;
     switch (addr){
         case 0x2000:
@@ -77,7 +77,7 @@ void PpuNew::WriteRegister(uint16_t addr, uint8_t data) {
 
 // $2000: PPUCTRL
 void PpuNew::_writeControl(uint8_t value) {
-    _trace("write control: " + _tohex(value));
+    //_trace("write control: " + _tohex(value));
     flagNameTable = (value >> 0) & 3;
     flagIncrement = (value >> 2) & 1;
     flagSpriteTable = (value >> 3) & 1;
@@ -93,7 +93,7 @@ void PpuNew::_writeControl(uint8_t value) {
 
 // $2001: PPUMASK
 void PpuNew::_writeMask(uint8_t value) {
-    _trace("write mask: " + _tohex(value));
+    //_trace("write mask: " + _tohex(value));
     flagGrayscale = (value >> 0) & 1;
     flagShowLeftBackground = (value >> 1) & 1;
     flagShowLeftSprites = (value >> 2) & 1;
@@ -117,32 +117,32 @@ uint8_t PpuNew::_readStatus() {
     _nmiChange();
     // w:                   = 0
     w = 0;
-    _trace("read status: -> " + _tohex(result));
+    //_trace("read status: -> " + _tohex(result));
     return result;
 }
 
 // $2003: OAMADDR
 void PpuNew::_writeOAMAddress(uint8_t value) {
-    _trace("write oam address: " + _tohex(value));
+    //_trace("write oam address: " + _tohex(value));
     oamAddress = value;
 }
 
 // $2004: OAMDATA (read)
 uint8_t PpuNew::_readOAMData() {
-    _trace("read oam data: -> " + _tohex(oamData[oamAddress]));
+    //_trace("read oam data: -> " + _tohex(oamData[oamAddress]));
     return oamData[oamAddress];
 }
 
 // $2004: OAMDATA (write)
 void PpuNew::_writeOAMData(uint8_t value) {
-    _trace("write oam data: " + _tohex(value));
+    //_trace("write oam data: " + _tohex(value));
     oamData[oamAddress] = value;
     oamAddress++;
 }
 
 // $2005: PPUSCROLL
 void PpuNew::_writeScroll(uint8_t value) {
-    _trace("write scroll: " + _tohex(value));
+    //_trace("write scroll: " + _tohex(value));
     if (w == 0) {
         // t: ........ ...HGFED = d: HGFED...
         // x:               CBA = d: .....CBA
@@ -163,7 +163,7 @@ void PpuNew::_writeScroll(uint8_t value) {
 
 // $2006: PPUADDR
 void PpuNew::_writeAddress(uint8_t value) {
-    _trace("write address: " + _tohex(value));
+    //_trace("write address: " + _tohex(value));
     //return;
     if (w == 0) {
         // t: ..FEDCBA ........ = d: ..FEDCBA
@@ -203,14 +203,14 @@ uint8_t PpuNew::_readData() {
     } else {
         v += 32;
     }
-    _trace("read data: -> " + _tohex(value));
+    //_trace("read data: -> " + _tohex(value));
     return value;
 }
 
 // $2007: PPUDATA (write)
 void PpuNew::_writeData(uint8_t value) {
     if ((flagShowBackground || flagShowSprites) && (scanline <= 240 || scanline == 261)) return;
-    _trace("write data: " + _tohex(value));
+    //_trace("write data: " + _tohex(value));
     Write(v, value);
 
     if (flagIncrement == 0) {
@@ -222,11 +222,11 @@ void PpuNew::_writeData(uint8_t value) {
 
 // $4014: OAMDMA
 void PpuNew::WriteDMA(uint8_t value){
-    _trace("initiate write dma: " + _tohex(value));
+    //_trace("initiate write dma: " + _tohex(value));
     uint16_t address = (uint16_t)(value) << 8;
     for (int i = 0; i < 256; i++) {
         uint8_t val = _system->mem->Read(address);
-        _trace("write dma: " + _tohex(address) + "(" + _tohex(oamAddress) + ") -> " + _tohex(val));
+        //_trace("write dma: " + _tohex(address) + "(" + _tohex(oamAddress) + ") -> " + _tohex(val));
         oamData[oamAddress] = val;
         //oamData[oamAddress] = 0;
         oamAddress++;
@@ -240,7 +240,7 @@ void PpuNew::WriteDMA(uint8_t value){
 
 // NTSC Timing Helper Functions
 void PpuNew::_incrementX() {
-    _trace("increment x");
+    //_trace("increment x");
     // increment hori(v)
     // if coarse X == 31
     if ((v&0x001F) == 31) {
@@ -255,7 +255,7 @@ void PpuNew::_incrementX() {
 }
 
 void PpuNew::_incrementY() {
-    _trace("increment y");
+    //_trace("increment y");
     // increment vert(v)
     // if fine Y < 7
     if ((v&0x7000) != 0x7000) {
@@ -284,14 +284,14 @@ void PpuNew::_incrementY() {
 }
 
 void PpuNew::_copyX() {
-    _trace("copy x");
+    //_trace("copy x");
     // hori(v) = hori(t)
     // v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
     v = (v & 0xFBE0) | (t & 0x041F);
 }
 
 void PpuNew::_copyY() {
-    _trace("copy y");
+    //_trace("copy y");
     // vert(v) = vert(t)
     // v: .IHGF.ED CBA..... = t: .IHGF.ED CBA.....
     v = (v & 0x841F) | (t & 0x7BE0);
@@ -300,7 +300,7 @@ void PpuNew::_copyY() {
 void PpuNew::_nmiChange() {
     bool nmi = nmiOutput && nmiOccurred;
     if (nmi && !nmiPrevious) {
-        _trace("nmi change");
+        //_trace("nmi change");
         // TODO: this fixes some games but the delay shouldn't have to be so
         // long, so the timings are off somewhere
         nmiDelay = 0;
@@ -310,13 +310,13 @@ void PpuNew::_nmiChange() {
 
 
 void PpuNew::_setVerticalBlank() {
-    _trace("set vertical blank");
+    //_trace("set vertical blank");
     nmiOccurred = true;
     _nmiChange();
 }
 
 void PpuNew::_clearVerticalBlank() {
-    _trace("clear vertical blank");
+    //_trace("clear vertical blank");
     nmiOccurred = false;
     _nmiChange();
 }
@@ -326,7 +326,7 @@ void PpuNew::_fetchNameTableByte() {
     //return;
     uint16_t address = 0x2000 | (v & 0x0FFF);
     uint8_t val = Read(address);
-    _trace("fetch name table byte: " + _tohex(address) + " -> " + _tohex(val));
+    //_trace("fetch name table byte: " + _tohex(address) + " -> " + _tohex(val));
     nameTableByte = val;
 }
 
@@ -336,7 +336,7 @@ void PpuNew::_fetchAttributeTableByte() {
     uint16_t address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
     uint8_t shift = ((v >> 4) & 4) | (v & 2);
     uint8_t val = ((Read(address) >> shift) & 3) << 2;
-    _trace("fetch attribute byte: " + _tohex(address) + " -> " + _tohex(val));
+    //_trace("fetch attribute byte: " + _tohex(address) + " -> " + _tohex(val));
     attributeTableByte = val;
 }
 
@@ -346,7 +346,7 @@ void PpuNew::_fetchLowTileByte() {
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*((uint16_t)(flagBackgroundTable)) + ((uint16_t)(nameTableByte)*16) + fineY;
     uint8_t val = Read(address);
-    _trace("fetch low tile byte: " + _tohex(address) + " -> " + _tohex(val));
+    //_trace("fetch low tile byte: " + _tohex(address) + " -> " + _tohex(val));
     lowTileByte = val;
 }
 
@@ -356,7 +356,7 @@ void PpuNew::_fetchHighTileByte() {
     uint16_t fineY = (v >> 12) & 7;
     uint16_t address = 0x1000*(uint16_t)(flagBackgroundTable) + ((uint16_t)(nameTableByte)*16) + fineY;
     uint8_t val = Read(address + 8);
-    _trace("fetch high tile byte: " + _tohex((uint16_t)(address + 8)) + " -> " + _tohex(val));
+    //_trace("fetch high tile byte: " + _tohex((uint16_t)(address + 8)) + " -> " + _tohex(val));
     highTileByte = val;
 }
 
@@ -371,12 +371,12 @@ void PpuNew::_storeTileData() {
         data <<= 4;
         data |= (uint32_t)(attributeTableByte | p1 | p2);
     }
-    _trace("store tile data: <- " + _tohex(data));
+    //_trace("store tile data: <- " + _tohex(data));
     tileData |= (uint64_t)(data);
 }
 
 uint32_t PpuNew::_fetchTileData() {
-    _trace("fetch tile data: -> " + _tohex((uint32_t)(tileData >> 32)));
+    //_trace("fetch tile data: -> " + _tohex((uint32_t)(tileData >> 32)));
     return (uint32_t)(tileData >> 32);
 }
 
@@ -409,7 +409,7 @@ spr PpuNew::_spritePixel() {
 }
 
 void PpuNew::_renderPixel() {
-    _trace("render pixel");
+    //_trace("render pixel");
     int x = cycle - 1;
     int y = scanline;
     uint8_t background = _backgroundPixel();
@@ -498,12 +498,12 @@ uint32_t PpuNew::_fetchSpritePattern(int i, int row) {
         data <<= 4;
         data |= (uint32_t)(a | p1 | p2);
     }
-    _trace("fetch sprite pattern: " + std::to_string(i) + ", " + std::to_string(row) + " -> " + _tohex(data));
+    //_trace("fetch sprite pattern: " + std::to_string(i) + ", " + std::to_string(row) + " -> " + _tohex(data));
     return data;
 }
 
 void PpuNew::_evaluateSprites() {
-    _trace("evaluate sprites");
+    //_trace("evaluate sprites");
     int h;
     if (flagSpriteSize == 0) {
         h = 8;
@@ -548,7 +548,7 @@ void PpuNew::_checkBreak() {
 };
 
 void PpuNew::tick() {
-    _trace(".", true);
+    //_trace(".", true);
     clocks++;
     //if (nmiDelay > 0) {
     //    nmiDelay--;
@@ -688,7 +688,7 @@ void PpuNew::Reset() {
 
 uint8_t PpuNew::Read(uint16_t addr) {
     uint16_t address = addr % 0x4000;
-    _trace("read: " + _tohex(address));
+    //_trace("read: " + _tohex(address));
 
     if (address < 0x2000)
         return _system->cart->Read(address);
@@ -703,7 +703,7 @@ uint8_t PpuNew::Read(uint16_t addr) {
 
 void PpuNew::Write(uint16_t addr, uint8_t data) {
     uint16_t address = addr % 0x4000;
-    _trace("write: " + _tohex(address) + " <- " + _tohex(data));
+    //_trace("write: " + _tohex(address) + " <- " + _tohex(data));
     if (address < 0x2000) {
         //data = 0;
         _system->cart->Write(address, data);
@@ -725,7 +725,7 @@ uint16_t PpuNew::_mirrorAddress(uint16_t addr) {
     auto table = address / 0x0400;
     auto offset = address % 0x0400;
     uint16_t retaddr = 0x2000 + Mirror[_system->cart->Header.MirrorMode()][table]*0x0400 + offset;
-    _trace("ppu mirror address: " + _tohex(addr) + " -> " + _tohex(retaddr));
+    //_trace("ppu mirror address: " + _tohex(addr) + " -> " + _tohex(retaddr));
     return retaddr;
 }
 

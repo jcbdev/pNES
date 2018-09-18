@@ -20,4 +20,4 @@ set(SOURCE_FILES
 add_library(core ${SOURCE_FILES})
 add_executable(pNes main.cpp)
 
-target_link_libraries(pNes core ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARIES})
+target_link_libraries(pNes core ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARIES} ${GPERFTOOLS_TCMALLOC_AND_PROFILER})

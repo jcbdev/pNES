@@ -314,14 +314,14 @@ void Cpu::_printClockDrift(uint8_t opcode) {
 void Cpu::Cycle() {
     _paged = false;
 
-    int size;
-    std::stringstream traceLog;
-    traceLog << _system->debug->Decode(pc, &size, false);
-    traceLog << "    a:" << _tohex(a) << ", x:" << _tohex(x) << ", y:" << _tohex(y)
-             << ", sp:" << _tohex(s) << ", p:" << _tohex((uint8_t)p);
-    _system->logger->Log("");
-    _system->logger->Log(traceLog.str());
-    _system->logger->Log("----------------------------------------------------------------------------------------------------");
+//    int size;
+//    std::stringstream traceLog;
+//    traceLog << _system->debug->Decode(pc, &size, false);
+//    traceLog << "    a:" << _tohex(a) << ", x:" << _tohex(x) << ", y:" << _tohex(y)
+//             << ", sp:" << _tohex(s) << ", p:" << _tohex((uint8_t)p);
+//    _system->logger->Log("");
+//    _system->logger->Log(traceLog.str());
+//    _system->logger->Log("----------------------------------------------------------------------------------------------------");
     uint8_t opcode = _readPcAndInc();
     //_system->logger->Log(std::to_string(opcode));
 
@@ -578,7 +578,7 @@ void Cpu::Cycle() {
     }
     _system->totalClocks += (clocks/3);
     totalClocks++;
-    _printClockDrift(opcode);
+    //_printClockDrift(opcode);
     //_system->logger->Log(std::to_string(clocks/3));
 }
 
