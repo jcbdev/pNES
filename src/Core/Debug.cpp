@@ -50,7 +50,7 @@ Debug::Debug(ISystem *system) : IDebug::IDebug(system) {
     //breakpoints.push_back(0x8e39);
     step = false;
     pause = false;
-    enabled = true;
+    enabled = false;
 }
 
 std::string Debug::Decode(int pc, int* increment, bool dynamic) {
@@ -295,6 +295,7 @@ void Debug::_setStatus() {
 }
 
 void Debug::Refresh() {
+    if (!enabled) return;
     if (!_disassembled) {
         Disassembly disasm;
         disasm.address = ".....";

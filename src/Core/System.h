@@ -25,6 +25,7 @@ public:
     ISystem();
     virtual void Configure(ICpu* cpu, IMemory* mem, Cart* cart, IPpu* ppu, IController* controller1, IDebug *debug, ILogger* logger) = 0;
     virtual void Reset() = 0;
+    virtual void Step() = 0;
 
     ICpu* cpu;
     IMemory* mem;
@@ -41,6 +42,7 @@ public:
     System();
     void Configure(ICpu* cpu, IMemory* mem, Cart* cart, IPpu* ppu, IController* controller1, IDebug* debug, ILogger* logger) override;
     void Reset() override;
+    void Step() override;
 };
 
 

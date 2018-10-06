@@ -15,53 +15,13 @@
 
 static SDL_Window *window = NULL;
 static SDL_Window *debugWindow = NULL;
-//static SDL_GLContext gl_context;
 static SDL_Renderer *renderer = NULL;
 static SDL_Renderer *debugRenderer = NULL;
 static SDL_Texture  *buffer = NULL;
 
-//static SDL_Texture  *message = NULL;
-//static SDL_Texture  *debugBuffer = NULL;
 static TTF_Font* Sans = NULL;
 static bool quitting = false;
 
-SDL_Texture* generateScanlineTexture(SDL_Renderer* renderer)
-{
-    // Create a scanline texture for 3x rendering
-    SDL_Texture* scanlineTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, 256 * 3, 262 * 3);
-    uint32_t* scanlineTextureBuffer = new uint32_t[256 * 262 * 3 * 3];
-    for (int y = 0; y < 262; y++)
-    {
-        for (int x = 0; x < 256; x++)
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    uint32_t color = 0xff000000;
-                    switch (j)
-                    {
-                        case 0:
-                            color |= 0xfdd6c7;
-                            break;
-                        case 1:
-                            color |= 0xbef5e1;
-                            break;
-                        case 2:
-                            color |= 0xcfe2ff;
-                            break;
-                    }
-                    scanlineTextureBuffer[((y * 3) + i) * (256 * 3) + (x * 3) + j] = color;
-                }
-            }
-        }
-    }
-    SDL_SetTextureBlendMode(scanlineTexture, SDL_BLENDMODE_MOD);
-    SDL_UpdateTexture(scanlineTexture, NULL, scanlineTextureBuffer, sizeof(uint16_t) * 256 * 3);
-    delete [] scanlineTextureBuffer;
-
-    return scanlineTexture;
-}
 
 void render(uint32_t* screenBuffer) {
 
@@ -73,40 +33,8 @@ void render(uint32_t* screenBuffer) {
     SDL_RenderSetLogicalSize(renderer, 512, 480);
     SDL_RenderCopy(renderer, buffer, NULL, NULL);
 
-    // Render scanlines
-//    SDL_RenderSetLogicalSize(renderer, 256 * 3, 262 * 3);
-//    SDL_RenderCopy(renderer, scanlineTexture, NULL, NULL);
-
     SDL_RenderPresent(renderer);
 } //render
-
-void renderTest(uint8_t* screenBuffer) {
-
-    SDL_UpdateTexture(buffer, NULL, screenBuffer, 256 * sizeof(uint8_t) * 3);
-
-    SDL_RenderClear(renderer);
-
-    // Render the screen
-    SDL_RenderSetLogicalSize(renderer, 1024, 960);
-    SDL_RenderCopy(renderer, buffer, NULL, NULL);
-
-    // Render scanlines
-//    SDL_RenderSetLogicalSize(renderer, 256 * 3, 262 * 3);
-//    SDL_RenderCopy(renderer, scanlineTexture, NULL, NULL);
-
-    SDL_RenderPresent(renderer);
-} //render
-
-//void debugRender(uint32_t* chr) {
-//    SDL_UpdateTexture(debugBuffer, NULL, chr, 256 * sizeof(uint32_t));
-//
-//    SDL_RenderClear(debugRenderer);
-//
-//    SDL_RenderSetLogicalSize(debugRenderer, 512, 256);
-//    SDL_RenderCopy(debugRenderer, debugBuffer, NULL, NULL);
-//
-//    SDL_RenderPresent(debugRenderer);
-//}
 
 void renderText(std::string text, int x, int y, SDL_Color color){
     if (text == "") return;
@@ -216,28 +144,28 @@ void debugRender(IDebug *debug, ICpu *cpu, bool isEditing, std::string gotoAddre
     renderText(debug->status.dot, 420, 146, White);
 
     //output trace
-//    auto traceIterator = debug->trace.rbegin();
-//    int instructions = 0;
-//    ypos = 750;
-//    while (traceIterator != debug->trace.rend() && instructions < 55){
-//        instructions++;
-//        ypos -= 14;
-//
-//        iterator = debug->disassembly.find(*traceIterator);
-//        if (iterator == debug->disassembly.end()){
-//            if (*traceIterator > 0x8000) {
-//                int opcodeSize = 0;
-//                debug->Decode(*traceIterator, &opcodeSize, true);
-//                iterator = debug->disassembly.find(*traceIterator);
-//                renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
-//                std::cout << "Unassembled missing instruction at: " << *traceIterator << std::endl;
-//            }
-//
-//        }
-//        else
-//            renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
-//        traceIterator++;
-//    }
+    auto traceIterator = debug->trace.rbegin();
+    int instructions = 0;
+    ypos = 750;
+    while (traceIterator != debug->trace.rend() && instructions < 55){
+        instructions++;
+        ypos -= 14;
+
+        iterator = debug->disassembly.find(*traceIterator);
+        if (iterator == debug->disassembly.end()){
+            if (*traceIterator > 0x8000) {
+                int opcodeSize = 0;
+                debug->Decode(*traceIterator, &opcodeSize, true);
+                iterator = debug->disassembly.find(*traceIterator);
+                renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
+                std::cout << "Unassembled missing instruction at: " << *traceIterator << std::endl;
+            }
+
+        }
+        else
+            renderAssembly(iterator->second, iterator->first, cpu->pc, debug->cursorPosition, false, ypos, 600);
+        traceIterator++;
+    }
 
     if (isEditing) {
         std::stringstream addr;
@@ -246,18 +174,6 @@ void debugRender(IDebug *debug, ICpu *cpu, bool isEditing, std::string gotoAddre
     }
 
     SDL_RenderPresent(debugRenderer);
-}
-
-
-
-
-int SDLCALL watch(void *userdata, SDL_Event* event) {
-
-    if (event->type == SDL_APP_WILLENTERBACKGROUND) {
-        quitting = true;
-    }
-
-    return 1;
 }
 
 int main() {
@@ -272,7 +188,7 @@ int main() {
     Cpu *cpu = new Cpu(system);
     PpuNew *ppu = new PpuNew(system);
     //Ppu *ppu = new Ppu(system);
-    IDebug *debug = new NoDebug(system);
+    IDebug *debug = new Debug(system);
 
     Controller *controller1 = new Controller(system);
 
@@ -298,32 +214,43 @@ int main() {
     renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
     buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
 
-    if (debug->enabled) {
-        debugWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768,
-                                       SDL_WINDOW_OPENGL);
-        debugRenderer = SDL_CreateRenderer(debugWindow, 0, SDL_RENDERER_ACCELERATED);
-    }
-
-    //gl_context = SDL_GL_CreateContext(window);
-
-    //buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
-    //debugBuffer = SDL_CreateTexture(debugRenderer, SDL_PIXELFORMAT_ARGB32, SDL_TEXTUREACCESS_STREAMING, 512, 512);
-
-    //SDL_AddEventWatch(watch, NULL);
-
     cpu->Reset();
     std::string gotoAddress = "8000";
     bool isEditing = false;
 
+    uint32_t startTime, currentTime;
+    const int FPS   = 60;
+    const int DELAY = 1000 / FPS;
     while(!quitting) {// && !cpu->error
+        startTime = SDL_GetTicks();
+
         SDL_Event event;
         while( SDL_PollEvent(&event) ) {
-            SDL_Delay(1);
             if(event.type == SDL_QUIT) {
                 quitting = true;
             }
 
-            if (!debug->enabled) {
+            if (event.type == SDL_KEYDOWN) {
+
+                if (event.key.keysym.sym == SDLK_d)
+                    debug->pause = !debug->pause;
+
+                if (event.key.keysym.sym == SDLK_d && event.key.keysym.mod == KMOD_LCTRL)
+                {
+                    if (debug->enabled) {
+                        SDL_DestroyRenderer(debugRenderer);
+                        SDL_DestroyWindow(debugWindow);
+                    }
+                    else {
+                        debugWindow = SDL_CreateWindow("pNES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768,
+                                                       SDL_WINDOW_OPENGL);
+                        debugRenderer = SDL_CreateRenderer(debugWindow, 0, SDL_RENDERER_ACCELERATED);
+                    }
+                    debug->enabled = !debug->enabled;
+                }
+            }
+
+            if (!debug->pause) {
                 if (event.type == SDL_KEYDOWN) {
                     if (event.key.keysym.sym == SDLK_z) {
                         controller1->SetButton(0);
@@ -378,7 +305,7 @@ int main() {
                 }
             }
 
-            if (debug->enabled) {
+            if (debug->enabled && debug->pause) {
                 if (event.type == SDL_KEYDOWN && isEditing) {
                     if (event.key.keysym.sym == SDLK_BACKSPACE) {
                         gotoAddress.pop_back();
@@ -395,8 +322,6 @@ int main() {
                 } else if (event.type == SDL_TEXTINPUT) {
                     gotoAddress += event.text.text;
                 } else if (event.type == SDL_KEYDOWN && !isEditing) {
-                    if (event.key.keysym.sym == SDLK_d)
-                        debug->pause = !debug->pause;
                     if (event.key.keysym.sym == SDLK_s) {
                         debug->pause = false;
                         debug->step = true;
@@ -435,59 +360,24 @@ int main() {
             }
         }
 
-        while (!ppu->render) {
-            if (!debug->pause) {
-
-                cpu->clocks--;
-                ppu->clocks--;
-
-                if (cpu->clocks <= 0) {
-                    debug->Refresh();
-                    //debugRender(debug, cpu, isEditing, gotoAddress);
-                    if (debug->pause) {
-                        cpu->clocks++;
-                        ppu->clocks++;
-                        continue;
-                    }
-                    if (debug->step) {
-                        debug->step = false;
-                        debug->pause = true;
-                    }
-
-                    if (!cpu->Interrupt())
-                        cpu->Cycle();
-
-                    if (debug->pause) debug->cursorPosition = cpu->pc;
-                }
-
-                if (ppu->clocks <= 0) {
-                    ppu->Step();
-//                if (system->totalClocks > 0xe4000){
-//                    debug->Break();
-//                    debug->Refresh();
-//                    debugRender(debug, cpu, isEditing, gotoAddress);
-//                }
-                }
-                //if (ppu->Dot() == 340 && ppu->Scanline() == 0xF0) system->totalClocks = 0;
-
-
-            } else {
-//                debug->Refresh();
-//                debugRender(debug, cpu, isEditing, gotoAddress);
-            }
+        while (!ppu->render && !debug->pause) {
+            system->Step();
         }
 
         render(ppu->ScreenBuffer());
         if (debug->enabled) debugRender(debug, cpu, isEditing, gotoAddress);
 
-        SDL_Delay(1);
-        //logger->Log("tick");
+        if (debug->step) {
+            debug->step = false;
+            debug->pause = true;
+        }
+
+        currentTime = SDL_GetTicks() - startTime;
+        if (currentTime < DELAY){
+            SDL_Delay((int)(DELAY - currentTime));
+        }
     }
 
-    SDL_DelEventWatch(watch, NULL);
-    if (debug->enabled) SDL_DestroyRenderer(debugRenderer);
-    //SDL_DestroyTexture(debugBuffer);
-    if (debug->enabled) SDL_DestroyWindow(debugWindow);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyTexture(buffer);
     SDL_DestroyWindow(window);
