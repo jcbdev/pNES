@@ -15,9 +15,11 @@ set(SOURCE_FILES
         Helpers/Logger.h Helpers/Logger.cpp
         Rom/Cart.h Rom/Cart.cpp Rom/RomHeader.h Rom/RomTypes.h
         Rom/Nrom.cpp Rom/Nrom.h Core/System.cpp Core/System.h Core/Debug.cpp Core/Debug.h
-        Core/Controller.h Core/Controller.cpp Core/NoDebug.h Core/NoDebug.cpp Core/Apu.cpp Core/Apu.h)
+        Core/Controller.h Core/Controller.cpp Core/NoDebug.h Core/NoDebug.cpp Core/Apu.cpp Core/Apu.h
+        Core/Filter.h Core/Filter.cpp)
 
 add_library(core ${SOURCE_FILES})
 add_executable(pNes main.cpp)
+#${GPERFTOOLS_TCMALLOC_AND_PROFILER}
 
-target_link_libraries(pNes core ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARIES} ${GPERFTOOLS_TCMALLOC_AND_PROFILER})
+target_link_libraries(pNes core ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARIES} )
