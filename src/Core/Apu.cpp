@@ -4,6 +4,7 @@
 
 #include <SDL_opengles2_gl2ext.h>
 #include <altivec.h>
+#include <tkDecls.h>
 #include "Apu.h"
 
 IApu::IApu(ISystem *system) {
@@ -298,8 +299,106 @@ void Noise::stepEnvelope() {
     }
 }
 
+void Noise::stepLength() {
+    if (lengthEnabled && lengthValue > 0) {
+        lengthValue--;
+    }
+}
+
+uint8_t Noise::output() {
+    if (!enabled)
+    {
+        return 0;
+    }
+    if (lengthValue == 0)
+    {
+        return 0;
+    }
+    if ((shiftRegister & 1) == 1)
+    {
+        return 0;
+    }
+    if (envelopeEnabled)
+    {
+        return n.envelopeVolume;
+    } else {
+        return n.constantVolume;
+    }
+}
+
 //DMC
+
+void DMC::writeControl(uint8_t value) {
+    irq = (value & 0x80) == 0x80;
+    loop = (value & 0x40) == 0x40;
+    tickPeriod = NtscDmcPeriod[value & 0x0F];
+}
+
+void DMC::writeValue(uint8_t value) {
+    value = value & 0x7F;
+}
+
+void DMC::writeAddress(uint8_t value) {
+// Sample address = %11AAAAAA.AA000000
+    sampleAddress = 0xC000 | ((uint16_t)(value) << 6);
+}
+
+void DMC::writeLength(uint8_t value) {
+// Sample length = %0000LLLL.LLLL0001
+    sampleLength = ((uint16_t)(value) << 4) | 1;
+}
+
 void DMC::restart() {
     currentAddress = 0;
     currentLength = 0;
+}
+
+void DMC::stepTimer() {
+    if (!d.enabled) {
+        return;
+    }
+    stepReader();
+    if (tickValue == 0) {
+        tickValue = tickPeriod;
+        stepShifter();
+    } else {
+        tickValue--;
+    }
+}
+
+void DMC::stepReader() {
+    if (currentLength > 0 && bitCount == 0) {
+        cpu.stall += 4;
+        shiftRegister = d.cpu.Read(d.currentAddress);
+        bitCount = 8;
+        currentAddress++;
+        if (currentAddress == 0) {
+            currentAddress = 0x8000;
+        }
+        currentLength--;
+        if (currentLength == 0 && loop) {
+            this->restart();
+        }
+    }
+}
+
+void DMC::stepShifter() {
+    if (bitCount == 0) {
+        return;
+    }
+    if ((shiftRegister&1) == 1) {
+        if (value <= 125) {
+            value += 2;
+        }
+    } else {
+        if (value >= 2) {
+            value -= 2;
+        }
+    }
+    shiftRegister >>= 1;
+    bitCount--;
+}
+
+uint8_t DMC::output() {
+    return value;
 }

@@ -133,6 +133,10 @@ struct Noise {
     void stepTimer();
 
     void stepEnvelope();
+
+    void stepLength();
+
+    uint8_t output();
 };
 
 struct DMC {
@@ -149,6 +153,22 @@ struct DMC {
     bool loop;
     bool irq;
     void restart();
+
+    void writeControl(uint8_t value);
+
+    void writeValue(uint8_t value);
+
+    void writeAddress(uint8_t value);
+
+    void writeLength(uint8_t value);
+
+    void stepTimer();
+
+    void stepReader();
+
+    void stepShifter();
+
+    uint8_t output();
 };
 
 class IApu {
