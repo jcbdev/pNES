@@ -2,10 +2,9 @@
 // Created by jimbo on 24/09/18.
 //
 
-#include <SDL_opengles2_gl2ext.h>
-#include <altivec.h>
-#include <tkDecls.h>
 #include "Apu.h"
+#include "Cpu.h"
+#include "Memory.h"
 
 IApu::IApu(ISystem *system) {
     _system = system;
@@ -63,7 +62,7 @@ void Apu::_writeControl(uint8_t value) {
 
 //PULSE
 void Pulse::writeControl(uint8_t value){
-    dutyMode = ((value >> 6) & 3;
+    dutyMode = ((value >> 6) & 3);
     lengthEnabled = ((value>>5)&1) == 0;
     envelopeLoop = ((value>>5)&1) == 1;
     envelopeEnabled = ((value>>4)&1) == 0;
@@ -246,11 +245,11 @@ uint8_t Triangle::output() {
 //NOOOOIIIIISSSEEEE
 
 void Noise::writeControl(uint8_t byte) {
-    lengthEnabled = ((value >> 5) & 1) == 0;
-    envelopeLoop = ((value >> 5) & 1) == 1;
-    envelopeEnabled = ((value >> 4) & 1) == 0;
-    envelopePeriod = value & 15;
-    constantVolume = value & 15;
+    lengthEnabled = ((byte >> 5) & 1) == 0;
+    envelopeLoop = ((byte >> 5) & 1) == 1;
+    envelopeEnabled = ((byte >> 4) & 1) == 0;
+    envelopePeriod = byte & 15;
+    constantVolume = byte & 15;
     envelopeStart = true;
 }
 
@@ -273,8 +272,8 @@ void Noise::stepTimer() {
         } else {
             shift = 1;
         }
-        b1 = shiftRegister & 1;
-        b2 = (shiftRegister >> shift) & 1;
+        auto b1 = shiftRegister & 1;
+        auto b2 = (shiftRegister >> shift) & 1;
         shiftRegister >>= 1;
         shiftRegister |= (b1 ^ b2) << 14;
     } else {
@@ -320,9 +319,9 @@ uint8_t Noise::output() {
     }
     if (envelopeEnabled)
     {
-        return n.envelopeVolume;
+        return envelopeVolume;
     } else {
-        return n.constantVolume;
+        return constantVolume;
     }
 }
 
@@ -354,7 +353,7 @@ void DMC::restart() {
 }
 
 void DMC::stepTimer() {
-    if (!d.enabled) {
+    if (!enabled) {
         return;
     }
     stepReader();
@@ -366,10 +365,10 @@ void DMC::stepTimer() {
     }
 }
 
-void DMC::stepReader() {
+void DMC::stepReader(ISystem* system) {
     if (currentLength > 0 && bitCount == 0) {
-        cpu.stall += 4;
-        shiftRegister = d.cpu.Read(d.currentAddress);
+        system->cpu->clocks += 4;
+        shiftRegister = system->mem->Read(currentAddress);
         bitCount = 8;
         currentAddress++;
         if (currentAddress == 0) {

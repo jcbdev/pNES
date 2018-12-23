@@ -164,7 +164,7 @@ struct DMC {
 
     void stepTimer();
 
-    void stepReader();
+    void stepReader(ISystem* system);
 
     void stepShifter();
 
