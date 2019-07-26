@@ -162,7 +162,7 @@ struct DMC {
 
     void writeLength(uint8_t value);
 
-    void stepTimer();
+    void stepTimer(ISystem* system);
 
     void stepReader(ISystem* system);
 

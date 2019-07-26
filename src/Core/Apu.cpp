@@ -352,11 +352,11 @@ void DMC::restart() {
     currentLength = 0;
 }
 
-void DMC::stepTimer() {
+void DMC::stepTimer(ISystem* system) {
     if (!enabled) {
         return;
     }
-    stepReader();
+    stepReader(system);
     if (tickValue == 0) {
         tickValue = tickPeriod;
         stepShifter();
