@@ -7,3 +7,7 @@
 void LoggerStub::Log(std::string log) {
     std::cout << log << std::endl;
 }
+
+LoggerStub::LoggerStub(ISystem *system) : ILogger(system) {
+
+}

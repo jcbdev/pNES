@@ -193,8 +193,8 @@ int main() {
     Controller *controller1 = new Controller(system);
 
     system->Configure(cpu, memory, cart, ppu, controller1, debug, logger);
-    //cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
-    cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
+    cart->LoadRom("/home/jimbo/CLionProjects/pNES/test.nes");
+    //cart->LoadRom("/Users/james/ClionProjects/LittlePNes/test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/color_test.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/palette.nes");
     //cart->LoadRom("/home/jimbo/CLionProjects/pNES/nestest.nes");

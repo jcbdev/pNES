@@ -8,6 +8,8 @@
 #include "../../src/Helpers/Logger.h"
 
 class LoggerStub : public ILogger {
+public:
+    explicit LoggerStub(ISystem* system);
     void Log(std::string log);
 };
 

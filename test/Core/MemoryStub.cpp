@@ -43,6 +43,6 @@ void MemoryStub::ForcedPage(uint16_t addr1, uint16_t addr2) {
     Read((addr1 & 0xff00) | (addr2 & 0x00ff));
 }
 
-void MemoryStub::PageIfRequired(uint16_t addr1, uint16_t addr2) {
+bool MemoryStub::PageIfRequired(uint16_t addr1, uint16_t addr2) {
     if((addr1 & 0xff00) != (addr2 & 0xff00)) Read((addr1 & 0xff00) | (addr2 & 0x00ff));
 }

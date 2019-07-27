@@ -22,6 +22,7 @@ Apu::Apu(ISystem *system) : IApu(system) {
     _noise.shiftRegister = 1;
     _pulse1.channel = 1;
     _pulse2.channel = 2;
+    _dmc.system = system;
 }
 
 uint8_t Apu::ReadRegister(uint16_t addr) {
@@ -58,6 +59,10 @@ void Apu::_writeControl(uint8_t value) {
     if (!_noise.enabled) _noise.lengthValue = 0;
     if (!_dmc.enabled) _dmc.currentLength = 0;
     else if (_dmc.currentLength == 0) _dmc.restart();
+}
+
+void Apu::Step() {
+    //TODO
 }
 
 //PULSE

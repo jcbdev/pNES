@@ -150,6 +150,7 @@ struct DMC {
     uint8_t bitCount;
     uint8_t tickPeriod;
     uint8_t tickValue;
+    ISystem* system;
     bool loop;
     bool irq;
     void restart();
@@ -176,6 +177,7 @@ public:
     explicit IApu(ISystem* system);
     virtual uint8_t ReadRegister(uint16_t addr) = 0;
     virtual void WriteRegister(uint16_t addr, uint8_t data) = 0;
+    virtual void Step() = 0;
 
     int32_t clocks;
 
@@ -188,6 +190,7 @@ public:
     explicit Apu(ISystem *system);
     uint8_t ReadRegister(uint16_t addr) override;
     void WriteRegister(uint16_t addr, uint8_t data) override;
+    void Step() override;
 
 private:
     uint8_t _readStatus();

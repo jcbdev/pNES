@@ -12,6 +12,9 @@
 #include "../../src/Core/Cpu.h"
 #include "../../src/Core/Ppu.h"
 #include "../../src/Rom/Cart.h"
+#include "PpuStub.h"
+#include "ControllerStub.h"
+#include "../../src/Core/NoDebug.h"
 
 CpuFlags nvdizc(bool n = false, bool v = false, bool d = false, bool i = true, bool z = false, bool c = false) {
     CpuFlags flags;
@@ -376,12 +379,14 @@ namespace {
         virtual void SetUp() {
             system = new System();
             mem = new MemoryStub(system);
-            logger = new LoggerStub();
+            logger = new LoggerStub(system);
             cpu = new Cpu(system);
-            ppu = new Ppu(system);
+            ppu = new PpuStub(system);
             cart = new Cart(system);
+            controller1 = new ControllerStub(system);
+            debug = new NoDebug(system);
 
-            system->Configure(cpu, mem, cart, ppu, logger);
+            system->Configure(cpu, mem, cart, ppu, controller1, debug, logger);
             //emulate jmp from reset
             mem->Write(0xFFFC, 0x00);
             mem->Write(0xFFFD, 0x80);
@@ -393,6 +398,8 @@ namespace {
         ICpu *cpu;
         IPpu *ppu;
         Cart *cart;
+        IController *controller1;
+        IDebug *debug;
     };
 }
 

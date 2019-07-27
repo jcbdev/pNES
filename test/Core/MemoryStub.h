@@ -19,7 +19,7 @@ public:
     void WriteRange(uint16_t start, uint16_t end, uint8_t value);
     uint8_t Read(uint16_t addr);
     uint8_t ReadZP(uint8_t addr);
-    void PageIfRequired(uint16_t addr1, uint16_t addr2);
+    bool PageIfRequired(uint16_t addr1, uint16_t addr2);
     void ForcedPage(uint16_t addr1, uint16_t addr2);
 
     void Reset();

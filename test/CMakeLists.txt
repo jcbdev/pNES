@@ -20,6 +20,6 @@ download_project(
 
 add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
 
-set(test_SRCS Core/CpuTests.cpp Core/MemoryStub.cpp Core/MemoryStub.h Core/LoggerStub.cpp Core/LoggerStub.h)
+set(test_SRCS Core/CpuTests.cpp Core/MemoryStub.cpp Core/MemoryStub.h Core/LoggerStub.cpp Core/LoggerStub.h Core/PpuStub.cpp Core/PpuStub.h Core/ControllerStub.cpp Core/ControllerStub.h)
 add_executable(runUnitTests gtest.cpp ${test_SRCS})
 target_link_libraries(runUnitTests gtest gmock core)
