@@ -34,6 +34,7 @@ public:
     explicit IPpu(ISystem* system);
 
     int32_t clocks;
+    int64_t cycle;
     bool render;
     bool breakOnNextScanline;
     int32_t scanlinesToRunFor;

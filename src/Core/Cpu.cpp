@@ -296,7 +296,7 @@ void Cpu::_printClockDrift(uint8_t opcode) {
     auto idrift = drift;
     if (drift > 7) {
         drift = drift - 513;
-        if ((_system->cpu->totalClocks%2) == 0)
+        if ((_system->cpu->cycle%2) == 0)
             drift--;
     }
     if (_paged)
@@ -576,8 +576,8 @@ void Cpu::Cycle() {
 
         default: error = true; break;
     }
-    _system->totalClocks += (clocks/3);
-    totalClocks++;
+    _system->cycle += (clocks/3);
+    cycle++;
     //_printClockDrift(opcode);
     //_system->logger->Log(std::to_string(clocks/3));
 }

@@ -92,7 +92,7 @@ private:
     void tick();
 
 
-    int cycle;    // 0-340
+    int dot;    // 0-340
     int scanline;    // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
     uint64_t frame; // frame counter
 

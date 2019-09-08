@@ -22,19 +22,187 @@ Apu::Apu(ISystem *system) : IApu(system) {
     _noise.shiftRegister = 1;
     _pulse1.channel = 1;
     _pulse2.channel = 2;
-    _dmc.system = system;
+    //_dmc.system = system;
+    cycle = 0;
+}
+
+void Apu::Step() {
+    uint64_t cycle1 = cycle;
+    cycle++;
+    uint64_t cycle2 = cycle;
+    _stepTimer();
+    int32_t f1 = (int)((double)(cycle1) / _frameCounterRate);
+    int32_t f2 = (int)((double)(cycle2) / _frameCounterRate);
+    if (f1 != f2) _stepFrameCounter();
+    int32_t s1 = (int)((double)(cycle1) / _sampleRate);
+    int32_t s2 = (int)((double)(cycle2) / _sampleRate);
+    if (s1 != s2) _sendSample();
+}
+
+void Apu::_sendSample() {
+    float output = filter
+}
+
+float Apu::_output() {
+    uint8_t p1 = _pulse1.output();
+    uint8_t p2 = _pulse2.output();
+    uint8_t t = _triangle.output();
+    uint8_t n = _noise.output();
+    uint8_t d = _dmc.output();
+    float pulseOut = _pulseTable[p1+p2];
+    float tndOut = _tndTable[(3*t) + (2*n) + d];
+    return pulseOut + tndOut;
+}
+
+void Apu::_stepFrameCounter() {
+    switch (_framePeriod){
+        case 4:
+            _frameValue = (_frameValue + 1) % 4;
+            switch (_frameValue) {
+                case 0: case 2:
+                    _stepEnvelope();
+                    break;
+                case 1:
+                    _stepEnvelope();
+                    _stepSweep();
+                    _stepLength();
+                    break;
+                case 3:
+                    _stepEnvelope();
+                    _stepSweep();
+                    _stepLength();
+                    _irq();
+                    break;
+            }
+            break;
+        case 5:
+            _frameValue = (_frameValue + 1) % 5;
+            switch (_frameValue) {
+                case 0: case 2:
+                    _stepEnvelope();
+                    break;
+                case 1: case 3:
+                    _stepEnvelope();
+                    _stepSweep();
+                    _stepLength();
+                    break;
+            }
+            break;
+    }
+}
+
+void Apu::_stepTimer() {
+    if ((cycle%2) == 0) {
+        _pulse1.stepTimer();
+        _pulse2.stepTimer();
+        _noise.stepTimer();
+        _dmc.stepTimer(_system);
+    }
+    _triangle.stepTimer();
+}
+
+void Apu::_stepEnvelope() {
+    _pulse1.stepEnvelope();
+    _pulse2.stepEnvelope();
+    _triangle.stepCounter();
+    _noise.stepEnvelope();
+}
+
+void Apu::_stepSweep() {
+    _pulse1.stepSweep();
+    _pulse2.stepSweep();
+}
+
+void Apu::_stepLength() {
+    _pulse1.stepLength();
+    _pulse2.stepLength();
+    _triangle.stepLength();
+    _noise.stepLength();
+}
+
+void Apu::_irq() {
+    if (_frameIRQ) {
+        _system->cpu->Irq(true);
+    }
 }
 
 uint8_t Apu::ReadRegister(uint16_t addr) {
     switch (addr) {
         case 0x4015:
+            return _readStatus();
+            break;
         default:
             return 0;
     }
 }
 
 void Apu::WriteRegister(uint16_t addr, uint8_t data) {
-
+    switch (addr) {
+        case 0x4000:
+            _pulse1.writeControl(data);
+            break;
+        case 0x4001:
+            _pulse1.writeSweep(data);
+            break;
+        case 0x4002:
+            _pulse1.writeTimerLow(data);
+            break;
+        case 0x4003:
+            _pulse1.writeTimerHigh(data);
+            break;
+        case 0x4004:
+            _pulse2.writeControl(data);
+            break;
+        case 0x4005:
+            _pulse2.writeSweep(data);
+            break;
+        case 0x4006:
+            _pulse2.writeTimerLow(data);
+            break;
+        case 0x4007:
+            _pulse2.writeTimerHigh(data);
+            break;
+        case 0x4008:
+            _triangle.writeControl(data);
+            break;
+        case 0x4009:
+        case 0x4010:
+            _dmc.writeControl(data);
+            break;
+        case 0x4011:
+            _dmc.writeValue(data);
+            break;
+        case 0x4012:
+            _dmc.writeAddress(data);
+            break;
+        case 0x4013:
+            _dmc.writeLength(data);
+            break;
+        case 0x400A:
+            _triangle.writeTimerLow(data);
+            break;
+        case 0x400B:
+            _triangle.writeTimerHigh(data);
+            break;
+        case 0x400C:
+            _noise.writeControl(data);
+            break;
+        case 0x400D:
+        case 0x400E:
+            _noise.writePeriod(data);
+            break;
+        case 0x400F:
+            _noise.writeLength(data);
+            break;
+        case 0x4015:
+            _writeControl(data);
+            break;
+        case 0x4017:
+            _writeFrameCounter(data);
+            break;
+            // default:
+            // 	log.Fatalf("unhandled apu register write at address: 0x%04X", address)
+    }
 }
 
 uint8_t Apu::_readStatus() {
@@ -44,7 +212,7 @@ uint8_t Apu::_readStatus() {
     if (_triangle.lengthValue > 0) status |= 4;
     if (_noise.lengthValue > 0) status |= 8;
     if (_dmc.currentLength > 0)
-    return status;
+        return status;
 }
 
 void Apu::_writeControl(uint8_t value) {
@@ -61,8 +229,15 @@ void Apu::_writeControl(uint8_t value) {
     else if (_dmc.currentLength == 0) _dmc.restart();
 }
 
-void Apu::Step() {
-    //TODO
+void Apu::_writeFrameCounter(uint8_t value) {
+    _framePeriod = 4 + ((value>>7)&1);
+    _frameIRQ = ((value>>6)&1) == 0;
+    // apu.frameValue = 0
+    if (_framePeriod == 5) {
+        _stepEnvelope();
+        _stepSweep();
+        _stepLength();
+    }
 }
 
 //PULSE

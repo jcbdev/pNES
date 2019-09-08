@@ -7,6 +7,13 @@
 
 #include <stdint.h>
 
+class IFilter {
+public:
+    virtual float Step(float x) = 0;
+
+};
+
+
 struct Filter {
     enum int32_t { HiPassStrong = 225574, HiPassWeak = 57593, LoPass = 86322413 };
 

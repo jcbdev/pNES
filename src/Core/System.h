@@ -34,7 +34,7 @@ public:
     IController* controller1;
     IDebug *debug;
     ILogger* logger;
-    uint32_t totalClocks;
+    uint64_t cycle;
 };
 
 class System : public ISystem {

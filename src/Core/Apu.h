@@ -150,7 +150,6 @@ struct DMC {
     uint8_t bitCount;
     uint8_t tickPeriod;
     uint8_t tickValue;
-    ISystem* system;
     bool loop;
     bool irq;
     void restart();
@@ -180,6 +179,7 @@ public:
     virtual void Step() = 0;
 
     int32_t clocks;
+    int64_t cycle;
 
 protected:
     ISystem* _system;
@@ -195,6 +195,16 @@ public:
 private:
     uint8_t _readStatus();
     void _writeControl(uint8_t value);
+    void _writeFrameCounter(uint8_t value);
+    void _stepFrameCounter();
+    void _stepTimer();
+    void _stepEnvelope();
+    void _stepSweep();
+    void _stepLength();
+    void _irq();
+    float _output();
+    void _sendSample();
+
 
     float _pulseTable[32];
     float _tndTable[2013];
@@ -210,6 +220,7 @@ private:
     uint8_t _frameValue;
     bool _frameIRQ;
 
+    const double _frameCounterRate = 1789773 / 240.0;
 };
 
 

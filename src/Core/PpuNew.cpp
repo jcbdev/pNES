@@ -394,7 +394,7 @@ spr PpuNew::_spritePixel() {
         return { 0, 0 };
     }
     for (int i = 0; i < spriteCount; i++) {
-        int offset = (cycle - 1) - int(spritePositions[i]);
+        int offset = (dot - 1) - int(spritePositions[i]);
         if (offset < 0 || offset > 7) {
             continue;
         }
@@ -410,7 +410,7 @@ spr PpuNew::_spritePixel() {
 
 void PpuNew::_renderPixel() {
     //_trace("render pixel");
-    int x = cycle - 1;
+    int x = dot - 1;
     int y = scanline;
     uint8_t background = _backgroundPixel();
     spr spriteData = _spritePixel();
@@ -550,6 +550,8 @@ void PpuNew::_checkBreak() {
 void PpuNew::tick() {
     //_trace(".", true);
     clocks++;
+    cycle++;
+
     //if (nmiDelay > 0) {
     //    nmiDelay--;
         if (nmiDelay == 0 && nmiOutput) {
@@ -558,8 +560,8 @@ void PpuNew::tick() {
     //}
 
     if (flagShowBackground != 0 || flagShowSprites != 0) {
-        if (f == 1 && scanline == 261 && cycle == 339) {
-            cycle = 0;
+        if (f == 1 && scanline == 261 && dot == 339) {
+            dot = 0;
             scanline = 0;
             frame++;
             _checkBreak();
@@ -567,9 +569,9 @@ void PpuNew::tick() {
             return;
         }
     }
-    cycle++;
-    if (cycle > 340) {
-        cycle = 0;
+    dot++;
+    if (dot > 340) {
+        dot = 0;
         scanline++;
         if (scanlinesToRunFor > 0) {
             scanlinesToRunFor--;
@@ -596,8 +598,8 @@ void PpuNew::Step() {
     bool visibleLine = scanline < 240;
     // bool postLine = ScanLine == 240;
     bool renderLine = preLine || visibleLine;
-    bool preFetchCycle = cycle >= 321 && cycle <= 336;
-    bool visibleCycle = cycle >= 1 && cycle <= 256;
+    bool preFetchCycle = dot >= 321 && dot <= 336;
+    bool visibleCycle = dot >= 1 && dot <= 256;
     bool fetchCycle = preFetchCycle || visibleCycle;
 
     // background logic
@@ -607,7 +609,7 @@ void PpuNew::Step() {
         }
         if (renderLine && fetchCycle) {
             tileData <<= 4;
-            switch (cycle % 8) {
+            switch (dot % 8) {
                 case 1:
                     _fetchNameTableByte();
                     break;
@@ -625,17 +627,17 @@ void PpuNew::Step() {
                     break;
             }
         }
-        if (preLine && cycle >= 280 && cycle <= 304) {
+        if (preLine && dot >= 280 && dot <= 304) {
             _copyY();
         }
         if (renderLine) {
-            if (fetchCycle && (cycle%8) == 0) {
+            if (fetchCycle && (dot%8) == 0) {
                 _incrementX();
             }
-            if (cycle == 256) {
+            if (dot == 256) {
                 _incrementY();
             }
-            if (cycle == 257) {
+            if (dot == 257) {
                 _copyX();
             }
         }
@@ -643,7 +645,7 @@ void PpuNew::Step() {
 
     // sprite logic
     if (renderingEnabled) {
-        if (cycle == 257) {
+        if (dot == 257) {
             if (visibleLine) {
                 _evaluateSprites();
             } else {
@@ -653,21 +655,21 @@ void PpuNew::Step() {
     }
 
     // vblank logic
-    if (scanline == 241 && cycle == 1) {
+    if (scanline == 241 && dot == 1) {
         _setVerticalBlank();
     }
-    if (preLine && cycle == 1) {
+    if (preLine && dot == 1) {
         _clearVerticalBlank();
         flagSpriteZeroHit = 0;
         flagSpriteOverflow = 0;
     }
 
-    if (cycle == 340 && breakOnNextScanline) {
+    if (dot == 340 && breakOnNextScanline) {
         breakOnNextScanline = false;
         _system->debug->Break();
         Snapshot();
     }
-    if (f == 1 && scanline == 261 && cycle == 339 && breakOnNextScanline) {
+    if (f == 1 && scanline == 261 && dot == 339 && breakOnNextScanline) {
         breakOnNextScanline = false;
         _system->debug->Break();
         Snapshot();
@@ -675,7 +677,7 @@ void PpuNew::Step() {
 }
 
 void PpuNew::Reset() {
-    cycle = 340;
+    dot = 340;
     scanline = 240;
     frame = 0;
     _writeControl(0);
@@ -684,6 +686,7 @@ void PpuNew::Reset() {
     breakOnNextScanline = false;
     scanlinesToRunFor = 0;
     framesToRunFor = 0;
+    cycle=0;
 }
 
 uint8_t PpuNew::Read(uint16_t addr) {
@@ -786,7 +789,7 @@ uint8_t PpuNew::Buffer() {
 }
 
 uint16_t PpuNew::Dot() {
-    return cycle;
+    return dot;
 }
 
 int16_t PpuNew::Scanline() {
@@ -834,7 +837,7 @@ void PpuNew::_trace(std::string log, bool showstats) {
     std::stringstream output;
     if (showstats) {
         output << "    <<< ";
-        output << std::setw(3) << cycle << ":" << std::setw(3) << scanline
+        output << std::setw(3) << dot << ":" << std::setw(3) << scanline
             << "    v:" << _tohex(v)
             << ".fY:" << _tohex((uint8_t)((v & 0x7fff) >> 12))
             << ".NN:" << _tohex((uint8_t)((v >> 10) & 0x03))

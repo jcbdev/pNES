@@ -26,7 +26,7 @@ public:
     uint16_t pc;
     CpuFlags p;
     int32_t clocks;
-    int32_t totalClocks;
+    int64_t cycle;
 
     virtual void Reset() = 0;
     virtual void Cycle() = 0;
