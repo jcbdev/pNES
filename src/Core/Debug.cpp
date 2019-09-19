@@ -268,7 +268,7 @@ void Debug::_setStatus() {
            << "(" << hex2 << (int)_system->cpu->p << ")";
     setvalue(status.p);
 
-    output << "Clocks: " << hex8 << (int)(_system->totalClocks);
+    output << "Cycles: " << hex8 << (int)(_system->cycle);
     setvalue(status.clock);
     output << "Scanline: " << (int)(_system->ppu->Scanline()) << " " << hex2 << (int)(_system->ppu->Scanline());
     setvalue(status.scanline);

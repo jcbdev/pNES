@@ -6,24 +6,37 @@
 #define PNES_FILTER_H
 
 #include <stdint.h>
+#include <math.h>
 
-class IFilter {
+class Filter {
+protected:
+    Filter(); //Prevent instantiation
+
 public:
     virtual float Step(float x) = 0;
-
 };
 
+class FirstOrderFilter : Filter {
+public:
+    float Step(float x) override;
 
-struct Filter {
-    enum int32_t { HiPassStrong = 225574, HiPassWeak = 57593, LoPass = 86322413 };
+protected:
+    FirstOrderFilter();
+    float B0;
+    float B1;
+    float A1;
+    float prevX;
+    float prevY;
+};
 
-    int64_t hipass_strong;
-    int64_t hipass_weak;
-    int64_t lopass;
+class LowPassFilter : FirstOrderFilter {
+public:
+    LowPassFilter(float sampleRate, float cutOffFreq);
+};
 
-    int64_t run_hipass_strong(int32_t sample);
-    int64_t run_hipass_weak(int32_t sample);
-    int64_t run_lopass(int32_t sample);
-} filter;
+class HighPassFilter : FirstOrderFilter {
+public:
+    HighPassFilter(float sampleRate, float cutOffFreq);
+};
 
 #endif //PNES_FILTER_H

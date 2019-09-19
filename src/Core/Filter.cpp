@@ -4,17 +4,29 @@
 
 #include "Filter.h"
 
-int64_t Filter::run_hipass_strong(int32_t sample) {
-    hipass_strong += ((((int64_t)sample << 16) - (hipass_strong >> 16)) * HiPassStrong) >> 16;
-    return sample - (hipass_strong >> 32);
+float FirstOrderFilter::Step(float x) {
+    float y = (B0*x) + (B1*prevX) - (A1*prevY);
+    prevY = y;
+    prevX = x;
+    return y;
 }
 
-int64_t Filter::run_hipass_weak(int32_t sample) {
-    hipass_weak += ((((int64_t)sample << 16) - (hipass_weak >> 16)) * HiPassWeak) >> 16;
-    return sample - (hipass_weak >> 32);
+FirstOrderFilter::FirstOrderFilter() {}
+
+Filter::Filter() {}
+
+LowPassFilter::LowPassFilter(float sampleRate, float cutOffFreq) {
+    float c = sampleRate / M_PI / cutOffFreq;
+    float a0i = 1 / (1 + c);
+    B0 = a0i;
+    B1 = a0i;
+    A1 = (1 - c) * a0i;
 }
 
-int64_t Filter::run_lopass(int32_t sample) {
-    lopass += ((((int64_t)sample << 16) - (lopass >> 16)) * LoPass) >> 16;
-    return (lopass >> 32);
+HighPassFilter::HighPassFilter(float sampleRate, float cutOffFreq) {
+    float c = sampleRate / M_PI / cutOffFreq;
+    float a0i = 1 / (1 + c);
+    B0 = c * a0i;
+    B1 = -c * a0i;
+    A1 = (1 - c) * a0i;
 }

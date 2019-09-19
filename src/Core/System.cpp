@@ -25,7 +25,7 @@ void System::Reset() {
     mem->Reset();
     cpu->Reset();
     ppu->Reset();
-    totalClocks = 7;
+    cycle = 7;
 }
 
 ISystem::ISystem() = default;

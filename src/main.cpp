@@ -6,6 +6,7 @@
 #include "Rom/Cart.h"
 #include "Core/Memory.h"
 #include "Core/Cpu.h"
+#include "Core/CpuJit.h"
 #include "Rom/Nrom.h"
 #include "Core/Ppu.h"
 #include "Core/Debug.h"
@@ -185,7 +186,7 @@ int main() {
     ILogger *logger = new ConsoleLogger(system);
     Cart *cart = new Nrom(system);
     CpuMemory *memory = new CpuMemory(system);
-    Cpu *cpu = new Cpu(system);
+    CpuJit *cpu = new CpuJit(system);
     PpuNew *ppu = new PpuNew(system);
     //Ppu *ppu = new Ppu(system);
     IDebug *debug = new Debug(system);

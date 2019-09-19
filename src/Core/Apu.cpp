@@ -40,7 +40,7 @@ void Apu::Step() {
 }
 
 void Apu::_sendSample() {
-    float output = filter
+    //float output = filter
 }
 
 float Apu::_output() {

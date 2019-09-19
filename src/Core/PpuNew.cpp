@@ -233,7 +233,7 @@ void PpuNew::WriteDMA(uint8_t value){
         address++;
     }
     _system->cpu->clocks += 513 * 3;
-    if ((_system->cpu->totalClocks%2) == 1) {
+    if ((_system->cpu->cycle%2) == 1) {
         _system->cpu->clocks = _system->cpu->clocks + 3;
     }
 }

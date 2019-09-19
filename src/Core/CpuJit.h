@@ -7,16 +7,9 @@
 
 #include <vector>
 #include "Cpu.h"
-
-struct simplenature {
-    bool addr, x, y, s, a;
-    bool n, v, d, i, z, c;
-
-    uint16_t index () {
-        return (addr << 12) | (x << 11) | (y << 10) | (s << 9) | (a << 8) |
-            (n << 7) | (v << 6) | (d << 3) | (i << 2) | (z << 1) | (c << 0);
-    }
-};
+#include "Memory.h"
+#include "System.h"
+#include "../Helpers/Logger.h"
 
 
 class CpuJit : public ICpu {
@@ -31,7 +24,10 @@ public:
     void Nmi(bool line) override;
 
 private:
+    std::string DecodeInstruction(int pc, int* increment, bool dynamic);
 
+protected:
+    ISystem *_system;
 };
 
 
